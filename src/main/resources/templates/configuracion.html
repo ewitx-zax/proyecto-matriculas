@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Configuración de Usuarios</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body{
+            background:#f5f7fa;
+            padding:30px;
+        }
+
+        .container{
+            background:white;
+            padding:25px;
+            border-radius:12px;
+            box-shadow:0px 3px 10px rgba(0,0,0,0.08);
+        }
+
+        h1{
+            margin-bottom:20px;
+            color:#4a6fa5;
+        }
+
+        table{
+            width:100%;
+            border-collapse: collapse;
+            margin-top:20px;
+        }
+
+        table th{
+            background:#e8eef7;
+            padding:12px;
+        }
+
+        table td{
+            padding:12px;
+            text-align:center;
+            border-bottom:1px solid #ddd;
+        }
+
+        .btn{
+            padding:8px 12px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            text-decoration:none;
+            color:white;
+            margin:2px;
+        }
+
+        .editar{
+            background:#5cb85c;
+        }
+
+        .deshabilitar{
+            background:#d9534f;
+        }
+
+        .agregar{
+            background:#4a6fa5;
+        }
+
+        /* BOTÓN VOLVER FIJO */
+        .volver{
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            text-decoration: none;
+            background: #6c757d;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+            z-index: 999;
+            transition: 0.3s;
+        }
+
+        .volver:hover{
+            background: #5a6268;
+            transform: scale(1.05);
+        }
+
+        /* MODAL */
+        .modal{
+            display:none;
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:rgba(0,0,0,0.5);
+        }
+
+        .modal-content{
+            background:white;
+            width:400px;
+            padding:20px;
+            border-radius:10px;
+            margin:100px auto;
+        }
+
+        .modal-content input{
+            width:100%;
+            padding:10px;
+            margin:8px 0;
+        }
+
+        /* TOAST */
+        .toast{
+            visibility:hidden;
+            min-width:300px;
+            background:#333;
+            color:white;
+            text-align:center;
+            border-radius:8px;
+            padding:16px;
+
+            position:fixed;
+            top:50%;
+            left:50%;
+            transform:translate(-50%, -50%);
+
+            z-index:9999;
+            opacity:0;
+            transition:opacity 1s ease;
+        }
+
+        .toast.show{
+            visibility:visible;
+            opacity:1;
+        }
+
+        .toast.success{
+            background:#28a745;
+        }
+
+        .toast.error{
+            background:#dc3545;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Configuración de Usuarios</h1>
+
+    <!-- BOTÓN AGREGAR USUARIO -->
+    <button class="btn agregar" onclick="abrirModalAgregar()">
+        Agregar Usuario
+    </button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Usuario</th>
+                <th>Fecha ingreso</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr th:each="usuario : ${usuarios}">
+                <td th:text="${usuario.idUsuario}"></td>
+                <td th:text="${usuario.username}"></td>
+                <td th:text="${usuario.ingreso}"></td>
+                <td th:text="${usuario.estado}"></td>
+
+                <td>
+                    <!-- MODIFICAR -->
+                    <button 
+                        class="btn editar"
+                        th:attr="data-id=${usuario.idUsuario}, data-username=${usuario.username}"
+                        onclick="abrirModalEditar(this)">
+                        Modificar
+                    </button>
+
+                    <!-- DESHABILITAR -->
+                    <a th:href="@{/deshabilitar/{id}(id=${usuario.idUsuario})}"
+                       class="btn deshabilitar">
+                        Deshabilitar
+                    </a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+<!-- BOTÓN VOLVER FIJO -->
+<a th:href="@{/dashboard}" class="volver">
+    Volver al Dashboard
+</a>
+
+<!-- MODAL EDITAR -->
+<div id="modalEditar" class="modal">
+    <div class="modal-content">
+
+        <h2>Modificar Usuario</h2>
+
+        <form action="/actualizar-usuario"
+              method="post"
+              onsubmit="return validarEditar()">
+
+            <input type="hidden" id="editId" name="id">
+
+            <label>Nombre Usuario</label>
+            <input type="text" id="editUsername" name="username" required>
+
+            <label>Nueva Contraseña</label>
+            <input type="password" id="editPassword" name="password" required>
+
+            <label>Confirmar Contraseña</label>
+            <input type="password" id="editConfirmPassword" required>
+
+            <button type="submit" class="btn editar">
+                Guardar Cambios
+            </button>
+
+            <button type="button"
+                    class="btn deshabilitar"
+                    onclick="cerrarModalEditar()">
+                Cancelar
+            </button>
+
+        </form>
+    </div>
+</div>
+
+<!-- MODAL AGREGAR -->
+<div id="modalAgregar" class="modal">
+    <div class="modal-content">
+
+        <h2>Agregar Usuario</h2>
+
+        <form action="/guardar-usuario"
+              method="post"
+              onsubmit="return validarAgregar()">
+
+            <label>Nombre Usuario</label>
+            <input type="text" name="username" required>
+
+            <label>Contraseña</label>
+            <input type="password" id="newPassword" name="password" required>
+
+            <label>Confirmar Contraseña</label>
+            <input type="password" id="confirmNewPassword" required>
+
+            <button type="submit" class="btn agregar">
+                Guardar Usuario
+            </button>
+
+            <button type="button"
+                    class="btn deshabilitar"
+                    onclick="cerrarModalAgregar()">
+                Cancelar
+            </button>
+
+        </form>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+
+function mostrarToast(mensaje, tipo){
+    let toast = document.getElementById("toast");
+
+    toast.innerHTML = mensaje;
+    toast.className = "toast show " + tipo;
+
+    setTimeout(function(){
+        toast.className = "toast";
+    }, 15000); // dura 15 segundos
+}
+
+/* MODAL EDITAR */
+function abrirModalEditar(button){
+    let id = button.getAttribute("data-id");
+    let username = button.getAttribute("data-username");
+
+    document.getElementById("editId").value = id;
+    document.getElementById("editUsername").value = username;
+    document.getElementById("modalEditar").style.display = "block";
+}
+
+function cerrarModalEditar(){
+    document.getElementById("modalEditar").style.display = "none";
+}
+
+function validarEditar(){
+    let pass1 = document.getElementById("editPassword").value;
+    let pass2 = document.getElementById("editConfirmPassword").value;
+
+    if(pass1 !== pass2){
+        mostrarToast("Las contraseñas no coinciden", "error");
+        return false;
+    }
+
+    mostrarToast("Usuario actualizado correctamente", "success");
+    return true;
+}
+
+/* MODAL AGREGAR */
+function abrirModalAgregar(){
+    document.getElementById("modalAgregar").style.display = "block";
+}
+
+function cerrarModalAgregar(){
+    document.getElementById("modalAgregar").style.display = "none";
+}
+
+function validarAgregar(){
+    let pass1 = document.getElementById("newPassword").value;
+    let pass2 = document.getElementById("confirmNewPassword").value;
+
+    if(pass1 !== pass2){
+        mostrarToast("Las contraseñas no coinciden", "error");
+        return false;
+    }
+
+    mostrarToast("Usuario agregado correctamente", "success");
+    return true;
+}
+
+</script>
+
+</body>
+</html>

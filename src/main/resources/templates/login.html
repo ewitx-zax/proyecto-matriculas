@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container{
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 350px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        h2{
+            margin-bottom: 20px;
+        }
+
+        input{
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button{
+            width: 95%;
+            padding: 10px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover{
+            background: #008cff;
+        }
+
+        .mensaje{
+            color: green;
+            margin-top: 15px;
+        }
+
+        .error{
+            color: red;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Iniciar Sesión</h2>
+
+        <form th:action="@{/login}" method="post" th:object="${loginModel}">
+            
+            <input type="text" 
+                   th:field="*{username}" 
+                   placeholder="Ingrese su usuario" 
+                   required>
+
+            <input type="password" 
+                   th:field="*{password}" 
+                   placeholder="Ingrese su contraseña" 
+                   required>
+
+            <button type="submit">Ingresar</button>
+        </form>
+
+        <!-- mensaje exitoso -->
+        <p class="mensaje" 
+           th:if="${mensaje}" 
+           th:text="${mensaje}">
+        </p>
+
+        <!-- mensaje error -->
+        <p class="error" 
+           th:if="${error}" 
+           th:text="${error}">
+        </p>
+    </div>
+
+</body>
+</html>
