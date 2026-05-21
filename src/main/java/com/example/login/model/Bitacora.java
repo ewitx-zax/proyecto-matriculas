@@ -12,16 +12,30 @@ public class Bitacora {
     @Column(name = "id_bitacora")
     private Integer idBitacora;
 
+    // USUARIO QUE HIZO LA ACCIÓN
     @ManyToOne
     @JoinColumn(name = "id_usuario")
     private User usuario;
 
+    // USUARIO AFECTADO
+    @Column(name = "id_usuarioafectado")
+    private Integer idUsuarioAfectado;
+
+    // ACCIÓN
     private String accion;
 
+    // DESCRIPCIÓN
+    private String descripcion;
+
+    // FECHA
     private LocalDateTime fecha;
 
     public Bitacora() {
     }
+
+    // =========================
+    // GETTERS Y SETTERS
+    // =========================
 
     public Integer getIdBitacora() {
         return idBitacora;
@@ -39,12 +53,28 @@ public class Bitacora {
         this.usuario = usuario;
     }
 
+    public Integer getIdUsuarioAfectado() {
+        return idUsuarioAfectado;
+    }
+
+    public void setIdUsuarioAfectado(Integer idUsuarioAfectado) {
+        this.idUsuarioAfectado = idUsuarioAfectado;
+    }
+
     public String getAccion() {
         return accion;
     }
 
     public void setAccion(String accion) {
         this.accion = accion;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 
     public LocalDateTime getFecha() {

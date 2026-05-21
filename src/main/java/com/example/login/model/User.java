@@ -13,13 +13,19 @@ public class User {
     private Integer idUsuario;
 
     private String username;
-    private String password;
-    private LocalDateTime ingreso;
 
-    private String estado; // NUEVO CAMPO
+    private String password;
+
+    private String estado;
+
+    private LocalDateTime ingreso;
 
     public User() {
     }
+
+    // =========================
+    // GETTERS Y SETTERS
+    // =========================
 
     public Integer getIdUsuario() {
         return idUsuario;
@@ -45,20 +51,19 @@ public class User {
         this.password = password;
     }
 
-    public LocalDateTime getIngreso() {
-        return ingreso;
-    }
-
-    public void setIngreso(LocalDateTime ingreso) {
-        this.ingreso = ingreso;
-    }
-
-    // getters y setters de estado
     public String getEstado() {
         return estado;
     }
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public LocalDateTime getIngreso() {
+        return ingreso;
+    }
+
+    public void setIngreso(LocalDateTime ingreso) {
+        this.ingreso = ingreso;
     }
 }
