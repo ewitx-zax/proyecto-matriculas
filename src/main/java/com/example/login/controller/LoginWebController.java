@@ -1,14 +1,19 @@
 package com.example.login.controller;
 
+import com.example.login.model.Bitacora;
 import com.example.login.model.Estudiante;
 import com.example.login.model.LoginModel;
 import com.example.login.model.User;
+
+import com.example.login.repository.BitacoraRepository;
 import com.example.login.repository.EstudianteRepository;
 import com.example.login.repository.UserRepository;
+
 import com.example.login.security.PasswordHasher;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,18 +23,53 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 public class LoginWebController {
 
+    // =========================
+    // REPOSITORIES
+    // =========================
     @Autowired
-    private UserRepository userRepository;
+    public UserRepository userRepository;
 
     @Autowired
-    private EstudianteRepository estudianteRepository;
+    public EstudianteRepository estudianteRepository;
+
+    @Autowired
+    public BitacoraRepository bitacoraRepository;
+
+    // =========================
+    // MÉTODO BITÁCORA
+    // =========================
+    private void registrarBitacora(
+            User usuario,
+            String accion) {
+
+        if (usuario == null) {
+            return;
+        }
+
+        Bitacora bitacora = new Bitacora();
+
+        bitacora.setUsuario(usuario);
+
+        bitacora.setAccion(accion);
+
+        bitacora.setFecha(LocalDateTime.now());
+
+        bitacoraRepository.save(bitacora);
+    }
 
     // =========================
     // LOGIN
     // =========================
     @GetMapping("/")
     public String mostrarLogin(Model model) {
-        model.addAttribute("loginModel", new LoginModel());
+
+        if (model != null) {
+            model.addAttribute(
+                    "loginModel",
+                    new LoginModel()
+            );
+        }
+
         return "login";
     }
 
@@ -38,39 +78,74 @@ public class LoginWebController {
             @ModelAttribute LoginModel loginModel,
             Model model) {
 
-        User user = userRepository
-                .findByUsername(loginModel.getUsername())
-                .orElse(null);
+        if (loginModel == null) {
+
+            if (model != null) {
+                model.addAttribute(
+                        "error",
+                        "Datos inválidos"
+                );
+            }
+
+            return "login";
+        }
+
+        Optional<User> optionalUser =
+                userRepository.findByUsername(
+                        loginModel.getUsername()
+                );
+
+        User user = optionalUser.orElse(null);
 
         if (user != null) {
 
-            // validar estado activo
-            if (!"Activo".equalsIgnoreCase(user.getEstado())) {
-                model.addAttribute(
-                        "error",
-                        "Usuario deshabilitado"
-                );
+            // VALIDAR ESTADO
+            if (!"Activo".equalsIgnoreCase(
+                    user.getEstado())) {
+
+                if (model != null) {
+                    model.addAttribute(
+                            "error",
+                            "Usuario deshabilitado"
+                    );
+                }
+
                 return "login";
             }
 
-            // validar contraseña
+            // VALIDAR CONTRASEÑA
             if (PasswordHasher.verifyPassword(
                     loginModel.getPassword(),
                     user.getPassword())) {
 
-                model.addAttribute(
-                        "mensaje",
-                        "Bienvenido " + user.getUsername()
+                user.setIngreso(LocalDateTime.now());
+
+                userRepository.save(user);
+
+                // BITÁCORA LOGIN
+                registrarBitacora(
+                        user,
+                        "Inicio de sesión"
                 );
+
+                if (model != null) {
+                    model.addAttribute(
+                            "mensaje",
+                            "Bienvenido "
+                            + user.getUsername()
+                    );
+                }
 
                 return "dashboard";
             }
         }
 
-        model.addAttribute(
-                "error",
-                "Usuario o contraseña incorrectos"
-        );
+        if (model != null) {
+            model.addAttribute(
+                    "error",
+                    "Usuario o contraseña incorrectos"
+            );
+        }
 
         return "login";
     }
@@ -80,10 +155,14 @@ public class LoginWebController {
     // =========================
     @GetMapping("/dashboard")
     public String mostrarDashboard(Model model) {
-        model.addAttribute(
-                "mensaje",
-                "Panel principal del sistema de matrículas"
-        );
+
+        if (model != null) {
+            model.addAttribute(
+                    "mensaje",
+                    "Panel principal del sistema de matrículas"
+            );
+        }
+
         return "dashboard";
     }
 
@@ -93,9 +172,15 @@ public class LoginWebController {
     @GetMapping("/configuracion")
     public String mostrarConfiguracion(Model model) {
 
-        List<User> usuarios = userRepository.findAll();
+        List<User> usuarios =
+                userRepository.findAll();
 
-        model.addAttribute("usuarios", usuarios);
+        if (model != null) {
+            model.addAttribute(
+                    "usuarios",
+                    usuarios
+            );
+        }
 
         return "configuracion";
     }
@@ -112,18 +197,23 @@ public class LoginWebController {
 
         nuevoUsuario.setUsername(username);
 
-        // encriptar contraseña
         nuevoUsuario.setPassword(
                 PasswordHasher.hashPassword(password)
         );
 
-        // fecha actual
-        nuevoUsuario.setIngreso(LocalDateTime.now());
+        nuevoUsuario.setIngreso(
+                LocalDateTime.now()
+        );
 
-        // estado activo
         nuevoUsuario.setEstado("Activo");
 
         userRepository.save(nuevoUsuario);
+
+        // BITÁCORA
+        registrarBitacora(
+                nuevoUsuario,
+                "Nuevo usuario registrado"
+        );
 
         return "redirect:/configuracion";
     }
@@ -135,7 +225,22 @@ public class LoginWebController {
     public String deshabilitarUsuario(
             @PathVariable Integer id) {
 
-        userRepository.deshabilitarUsuario(id);
+        User usuario =
+                userRepository.findById(id)
+                        .orElse(null);
+
+        if (usuario != null) {
+
+            usuario.setEstado("Deshabilitado");
+
+            userRepository.save(usuario);
+
+            // BITÁCORA
+            registrarBitacora(
+                    usuario,
+                    "Usuario deshabilitado"
+            );
+        }
 
         return "redirect:/configuracion";
     }
@@ -149,9 +254,12 @@ public class LoginWebController {
             @RequestParam String username,
             @RequestParam String password) {
 
-        User usuario = userRepository.findById(id).orElse(null);
+        User usuario =
+                userRepository.findById(id)
+                        .orElse(null);
 
         if (usuario != null) {
+
             usuario.setUsername(username);
 
             usuario.setPassword(
@@ -159,6 +267,12 @@ public class LoginWebController {
             );
 
             userRepository.save(usuario);
+
+            // BITÁCORA
+            registrarBitacora(
+                    usuario,
+                    "Usuario editado"
+            );
         }
 
         return "redirect:/configuracion";
@@ -168,33 +282,66 @@ public class LoginWebController {
     // REGISTRAR ESTUDIANTE
     // =========================
     @GetMapping("/registrar-estudiante")
-    public String mostrarRegistroEstudiante(Model model) {
-        model.addAttribute("estudiante", new Estudiante());
+    public String mostrarRegistroEstudiante(
+            Model model) {
+
+        if (model != null) {
+            model.addAttribute(
+                    "estudiante",
+                    new Estudiante()
+            );
+        }
+
         return "registrar-estudiante";
     }
 
     @PostMapping("/guardar-estudiante")
     public String guardarEstudiante(
-            @ModelAttribute Estudiante estudiante) {
+            @ModelAttribute Estudiante estudiante,
+            Model model) {
 
-        estudianteRepository.save(estudiante);
+        try {
 
-        return "redirect:/gestion-matricula";
+            estudianteRepository.save(estudiante);
+
+            return "redirect:/gestion-matricula";
+
+        } catch (Exception e) {
+
+            if (model != null) {
+
+                model.addAttribute(
+                        "error",
+                        "El NIE ya existe o hay datos incorrectos"
+                );
+
+                model.addAttribute(
+                        "estudiante",
+                        estudiante
+                );
+            }
+
+            return "registrar-estudiante";
+        }
     }
 
     // =========================
     // GESTIÓN MATRÍCULA
     // =========================
     @GetMapping("/gestion-matricula")
-    public String mostrarGestionMatricula(Model model) {
+    public String mostrarGestionMatricula(
+            Model model) {
 
         List<Estudiante> estudiantes =
                 estudianteRepository.findAll();
 
-        model.addAttribute(
-                "estudiantes",
-                estudiantes
-        );
+        if (model != null) {
+
+            model.addAttribute(
+                    "estudiantes",
+                    estudiantes
+            );
+        }
 
         return "gestion-matricula";
     }
