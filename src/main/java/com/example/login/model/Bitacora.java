@@ -12,7 +12,7 @@ public class Bitacora {
     @Column(name = "id_bitacora")
     private Integer idBitacora;
 
-    // USUARIO QUE HIZO LA ACCIÓN
+    // USUARIO QUE HIZO LA ACCION
     @ManyToOne
     @JoinColumn(name = "id_usuario")
     private User usuario;
@@ -21,21 +21,23 @@ public class Bitacora {
     @Column(name = "id_usuarioafectado")
     private Integer idUsuarioAfectado;
 
-    // ACCIÓN
+    // ACCION
+    @Column(name = "accion")
     private String accion;
 
-    // DESCRIPCIÓN
+    // DESCRIPCION
+    @Column(name = "descripcion")
     private String descripcion;
 
     // FECHA
+    @Column(name = "fecha")
     private LocalDateTime fecha;
 
+    // CONSTRUCTOR VACIO
     public Bitacora() {
     }
 
-    // =========================
     // GETTERS Y SETTERS
-    // =========================
 
     public Integer getIdBitacora() {
         return idBitacora;

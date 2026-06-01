@@ -4,12 +4,12 @@ import com.example.login.model.Bitacora;
 import com.example.login.model.Estudiante;
 import com.example.login.model.LoginModel;
 import com.example.login.model.User;
-
 import com.example.login.repository.BitacoraRepository;
 import com.example.login.repository.EstudianteRepository;
 import com.example.login.repository.UserRepository;
-
 import com.example.login.security.PasswordHasher;
+
+import jakarta.servlet.http.HttpSession;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,23 +35,17 @@ public class LoginWebController {
     // MÉTODO BITÁCORA
     // =========================
     private void registrarBitacora(
-            User usuario,
+            User usuarioAccion,
             Integer usuarioAfectado,
             String accion,
             String descripcion) {
 
         Bitacora bitacora = new Bitacora();
-
-        bitacora.setUsuario(usuario);
-
+        bitacora.setUsuario(usuarioAccion);
         bitacora.setIdUsuarioAfectado(usuarioAfectado);
-
         bitacora.setAccion(accion);
-
         bitacora.setDescripcion(descripcion);
-
         bitacora.setFecha(LocalDateTime.now());
-
         bitacoraRepository.save(bitacora);
     }
 
@@ -60,63 +54,39 @@ public class LoginWebController {
     // =========================
     @GetMapping("/")
     public String mostrarLogin(Model model) {
-
         model.addAttribute("loginModel", new LoginModel());
-
         return "login";
     }
 
     @PostMapping("/login")
     public String login(
             @ModelAttribute LoginModel loginModel,
-            Model model) {
+            Model model,
+            HttpSession session) {
 
         User user = userRepository
                 .findByUsername(loginModel.getUsername())
                 .orElse(null);
 
         if (user != null) {
-
-            if (!"Activo".equalsIgnoreCase(user.getEstado())) {
-
-                model.addAttribute(
-                        "error",
-                        "Usuario deshabilitado"
-                );
-
+            if (!"activo".equalsIgnoreCase(user.getEstado())) { // ← solo permite "activo"
+                model.addAttribute("error", "Usuario deshabilitado");
                 return "login";
             }
 
-            if (PasswordHasher.verifyPassword(
-                    loginModel.getPassword(),
-                    user.getPassword())) {
-
+            if (PasswordHasher.verifyPassword(loginModel.getPassword(), user.getPassword())) {
                 user.setIngreso(LocalDateTime.now());
-
                 userRepository.save(user);
 
-                // BITÁCORA LOGIN
-                registrarBitacora(
-                        user,
-                        user.getIdUsuario(),
-                        "LOGIN",
-                        "El usuario inició sesión"
-                );
+                session.setAttribute("usuarioLogueado", user);
 
-                model.addAttribute(
-                        "mensaje",
-                        "Bienvenido " + user.getUsername()
-                );
-
+                registrarBitacora(user, user.getIdUsuario(), "LOGIN", "El usuario inició sesión");
+                model.addAttribute("mensaje", "Bienvenido " + user.getUsername());
                 return "dashboard";
             }
         }
 
-        model.addAttribute(
-                "error",
-                "Usuario o contraseña incorrectos"
-        );
-
+        model.addAttribute("error", "Usuario o contraseña incorrectos");
         return "login";
     }
 
@@ -125,12 +95,7 @@ public class LoginWebController {
     // =========================
     @GetMapping("/dashboard")
     public String mostrarDashboard(Model model) {
-
-        model.addAttribute(
-                "mensaje",
-                "Panel principal del sistema de matrículas"
-        );
-
+        model.addAttribute("mensaje", "Panel principal del sistema de matrículas");
         return "dashboard";
     }
 
@@ -139,11 +104,8 @@ public class LoginWebController {
     // =========================
     @GetMapping("/configuracion")
     public String mostrarConfiguracion(Model model) {
-
         List<User> usuarios = userRepository.findAll();
-
         model.addAttribute("usuarios", usuarios);
-
         return "configuracion";
     }
 
@@ -153,30 +115,20 @@ public class LoginWebController {
     @PostMapping("/guardar-usuario")
     public String guardarUsuario(
             @RequestParam String username,
-            @RequestParam String password) {
+            @RequestParam String password,
+            HttpSession session) {
+
+        User usuarioAccion = (User) session.getAttribute("usuarioLogueado");
+        if (usuarioAccion == null) return "redirect:/";
 
         User nuevoUsuario = new User();
-
         nuevoUsuario.setUsername(username);
-
-        nuevoUsuario.setPassword(
-                PasswordHasher.hashPassword(password)
-        );
-
+        nuevoUsuario.setPassword(PasswordHasher.hashPassword(password));
         nuevoUsuario.setIngreso(LocalDateTime.now());
-
-        nuevoUsuario.setEstado("Activo");
-
+        nuevoUsuario.setEstado("activo"); // ← en minúscula
         userRepository.save(nuevoUsuario);
 
-        // BITÁCORA REGISTRO
-        registrarBitacora(
-                nuevoUsuario,
-                nuevoUsuario.getIdUsuario(),
-                "REGISTRO",
-                "Se registró un nuevo usuario"
-        );
-
+        registrarBitacora(usuarioAccion, nuevoUsuario.getIdUsuario(), "REGISTRO", "Se registró un nuevo usuario");
         return "redirect:/configuracion";
     }
 
@@ -185,25 +137,17 @@ public class LoginWebController {
     // =========================
     @GetMapping("/deshabilitar/{id}")
     public String deshabilitarUsuario(
-            @PathVariable Integer id) {
+            @PathVariable Integer id,
+            HttpSession session) {
 
-        User usuario = userRepository
-                .findById(id)
-                .orElse(null);
+        User usuarioAccion = (User) session.getAttribute("usuarioLogueado");
+        if (usuarioAccion == null) return "redirect:/";
 
+        User usuario = userRepository.findById(id).orElse(null);
         if (usuario != null) {
-
-            usuario.setEstado("Deshabilitado");
-
+            usuario.setEstado("Deshabilitado"); // ← Deshabilitado
             userRepository.save(usuario);
-
-            // BITÁCORA DESHABILITAR
-            registrarBitacora(
-                    usuario,
-                    usuario.getIdUsuario(),
-                    "DESHABILITAR",
-                    "Se deshabilitó un usuario"
-            );
+            registrarBitacora(usuarioAccion, usuario.getIdUsuario(), "DESHABILITAR", "El usuario deshabilitó otro usuario");
         }
 
         return "redirect:/configuracion";
@@ -216,29 +160,18 @@ public class LoginWebController {
     public String actualizarUsuario(
             @RequestParam Integer id,
             @RequestParam String username,
-            @RequestParam String password) {
+            @RequestParam String password,
+            HttpSession session) {
 
-        User usuario = userRepository
-                .findById(id)
-                .orElse(null);
+        User usuarioAccion = (User) session.getAttribute("usuarioLogueado");
+        if (usuarioAccion == null) return "redirect:/";
 
+        User usuario = userRepository.findById(id).orElse(null);
         if (usuario != null) {
-
             usuario.setUsername(username);
-
-            usuario.setPassword(
-                    PasswordHasher.hashPassword(password)
-            );
-
+            usuario.setPassword(PasswordHasher.hashPassword(password));
             userRepository.save(usuario);
-
-            // BITÁCORA EDITAR
-            registrarBitacora(
-                    usuario,
-                    usuario.getIdUsuario(),
-                    "EDITAR",
-                    "Se editaron los datos del usuario"
-            );
+            registrarBitacora(usuarioAccion, usuario.getIdUsuario(), "EDITAR", "El usuario editó otro usuario");
         }
 
         return "redirect:/configuracion";
@@ -249,12 +182,7 @@ public class LoginWebController {
     // =========================
     @GetMapping("/registrar-estudiante")
     public String mostrarRegistroEstudiante(Model model) {
-
-        model.addAttribute(
-                "estudiante",
-                new Estudiante()
-        );
-
+        model.addAttribute("estudiante", new Estudiante());
         return "registrar-estudiante";
     }
 
@@ -264,23 +192,11 @@ public class LoginWebController {
             Model model) {
 
         try {
-
             estudianteRepository.save(estudiante);
-
             return "redirect:/gestion-matricula";
-
         } catch (Exception e) {
-
-            model.addAttribute(
-                    "error",
-                    "El NIE ya existe o hay datos incorrectos"
-            );
-
-            model.addAttribute(
-                    "estudiante",
-                    estudiante
-            );
-
+            model.addAttribute("error", "El NIE ya existe o hay datos incorrectos");
+            model.addAttribute("estudiante", estudiante);
             return "registrar-estudiante";
         }
     }
@@ -290,15 +206,8 @@ public class LoginWebController {
     // =========================
     @GetMapping("/gestion-matricula")
     public String mostrarGestionMatricula(Model model) {
-
-        List<Estudiante> estudiantes =
-                estudianteRepository.findAll();
-
-        model.addAttribute(
-                "estudiantes",
-                estudiantes
-        );
-
+        List<Estudiante> estudiantes = estudianteRepository.findAll();
+        model.addAttribute("estudiantes", estudiantes);
         return "gestion-matricula";
     }
 }

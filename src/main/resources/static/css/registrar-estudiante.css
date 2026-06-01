@@ -1,0 +1,82 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f7fa;
+    padding: 30px;
+}
+
+.container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 1100px;
+    margin: auto;
+    box-shadow: 0px 3px 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    color: #4a6fa5;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+.full-width {
+    grid-column: span 2;
+}
+
+button {
+    margin-top: 20px;
+    background: #4a6fa5;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+}
+
+button:hover {
+    background: #3d5d8a;
+}
+
+/* BOTÓN VOLVER FIJO */
+.volver {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    text-decoration: none;
+    background: #6c757d;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+    z-index: 999;
+    transition: 0.3s;
+}
+
+.volver:hover {
+    background: #5a6268;
+    transform: scale(1.05);
+}
+

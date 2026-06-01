@@ -2,192 +2,105 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Registrar Estudiante</title>
-
-    <style>
-        body{
-            font-family: Arial, sans-serif;
-            background:#f5f7fa;
-            padding:30px;
-        }
-
-        .container{
-            background:white;
-            padding:30px;
-            border-radius:12px;
-            width:90%;
-            margin:auto;
-            box-shadow:0px 3px 10px rgba(0,0,0,0.1);
-        }
-
-        h1{
-            color:#4a6fa5;
-            margin-bottom:20px;
-            text-align:center;
-        }
-
-        .form-grid{
-            display:grid;
-            grid-template-columns: repeat(2,1fr);
-            gap:15px;
-        }
-
-        input, select{
-            width:100%;
-            padding:10px;
-            border:1px solid #ccc;
-            border-radius:6px;
-        }
-
-        .full-width{
-            grid-column: span 2;
-        }
-
-        button{
-            margin-top:20px;
-            background:#4a6fa5;
-            color:white;
-            border:none;
-            padding:12px 20px;
-            border-radius:8px;
-            cursor:pointer;
-        }
-
-        button:hover{
-            background:#3d5d8a;
-        }
-
-        /* BOTÓN VOLVER FIJO */
-        .volver{
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            text-decoration: none;
-            background: #6c757d;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
-            z-index: 999;
-            transition: 0.3s;
-        }
-
-        .volver:hover{
-            background: #5a6268;
-            transform: scale(1.05);
-        }
-
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Estudiante - Matrículas INO</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{/css/registrar-estudiante.css}">
 </head>
 <body>
+    <div class="container">
+        <h1>Registro de Estudiante</h1>
+        
+        <form th:action="@{/guardar-estudiante}" 
+              th:object="${estudiante}" 
+              method="post">
+            
+            <div class="form-grid">
+                <input type="text" th:field="*{nie}" placeholder="NIE">
+                <input type="text" th:field="*{nui}" placeholder="NUI">
+                <input type="text" th:field="*{dui}" placeholder="DUI">
+                
+                <input type="text" th:field="*{primerNombre}" placeholder="Primer Nombre">
+                <input type="text" th:field="*{segundoNombre}" placeholder="Segundo Nombre">
+                <input type="text" th:field="*{tercerNombre}" placeholder="Tercer Nombre">
+                
+                <input type="text" th:field="*{primerApellido}" placeholder="Primer Apellido">
+                <input type="text" th:field="*{segundoApellido}" placeholder="Segundo Apellido">
+                <input type="text" th:field="*{tercerApellido}" placeholder="Tercer Apellido">
+                
+                <input type="text" 
+                       th:field="*{nombrePartida}" 
+                       class="full-width"
+                       placeholder="Nombre según partida de nacimiento">
+                
+                <input type="date" th:field="*{fechaNacimiento}">
+                <input type="text" th:field="*{nacionalidad}" placeholder="Nacionalidad">
+                
+                <input type="text" 
+                       th:field="*{departamentoNacimiento}" 
+                       placeholder="Departamento de nacimiento">
+                
+                <input type="text" 
+                       th:field="*{municipioNacimiento}" 
+                       placeholder="Municipio de nacimiento">
+                
+                <select th:field="*{sexo}">
+                    <option value="">Seleccione sexo</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                </select>
+                
+                <input type="text" 
+                       th:field="*{estadoFamiliar}" 
+                       placeholder="Estado familiar">
+                
+                <input type="text" th:field="*{etnia}" placeholder="Etnia">
+                
+                <select th:field="*{discapacidad}">
+                    <option value="">¿Posee discapacidad?</option>
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
+                
+                <select th:field="*{trastornoAprendizaje}">
+                    <option value="">¿Trastorno de aprendizaje?</option>
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
+                
+                <select th:field="*{embarazada}">
+                    <option value="">¿Embarazada?</option>
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
+                
+                <input type="date" 
+                       th:field="*{fechaProbableParto}">
+                
+                <input type="text" 
+                       th:field="*{estadoPersona}" 
+                       placeholder="Estado de la persona">
+                
+                <input type="email" 
+                       th:field="*{correo}" 
+                       placeholder="Correo electrónico">
+                
+                <input type="number" 
+                       th:field="*{idDireccion}" 
+                       placeholder="ID Dirección">
+            </div>
+            
+            <button type="submit">Guardar Estudiante</button>
+        </form>
+    </div>
 
-<div class="container">
+    <!-- BOTÓN VOLVER FIJO -->
+    <a class="volver" th:href="@{/dashboard}">
+        ← Volver al Dashboard
+    </a>
 
-    <h1>Registro de Estudiante</h1>
-
-    <form th:action="@{/guardar-estudiante}"
-          th:object="${estudiante}"
-          method="post">
-
-        <div class="form-grid">
-
-            <input type="text" th:field="*{nie}" placeholder="NIE">
-            <input type="text" th:field="*{nui}" placeholder="NUI">
-
-            <input type="text" th:field="*{dui}" placeholder="DUI">
-            <input type="text" th:field="*{primerNombre}" placeholder="Primer Nombre">
-
-            <input type="text" th:field="*{segundoNombre}" placeholder="Segundo Nombre">
-            <input type="text" th:field="*{tercerNombre}" placeholder="Tercer Nombre">
-
-            <input type="text" th:field="*{primerApellido}" placeholder="Primer Apellido">
-            <input type="text" th:field="*{segundoApellido}" placeholder="Segundo Apellido">
-
-            <input type="text" th:field="*{tercerApellido}" placeholder="Tercer Apellido">
-
-            <input 
-                type="text"
-                th:field="*{nombrePartida}"
-                class="full-width"
-                placeholder="Nombre según partida de nacimiento">
-
-            <input type="date" th:field="*{fechaNacimiento}">
-            <input type="text" th:field="*{nacionalidad}" placeholder="Nacionalidad">
-
-            <input 
-                type="text"
-                th:field="*{departamentoNacimiento}"
-                placeholder="Departamento de nacimiento">
-
-            <input 
-                type="text"
-                th:field="*{municipioNacimiento}"
-                placeholder="Municipio de nacimiento">
-
-            <select th:field="*{sexo}">
-                <option value="">Seleccione sexo</option>
-                <option value="Masculino">Masculino</option>
-                <option value="Femenino">Femenino</option>
-            </select>
-
-            <input 
-                type="text"
-                th:field="*{estadoFamiliar}"
-                placeholder="Estado familiar">
-
-            <input type="text" th:field="*{etnia}" placeholder="Etnia">
-
-            <select th:field="*{discapacidad}">
-                <option value="">¿Posee discapacidad?</option>
-                <option value="true">Sí</option>
-                <option value="false">No</option>
-            </select>
-
-            <select th:field="*{trastornoAprendizaje}">
-                <option value="">¿Trastorno de aprendizaje?</option>
-                <option value="true">Sí</option>
-                <option value="false">No</option>
-            </select>
-
-            <select th:field="*{embarazada}">
-                <option value="">¿Embarazada?</option>
-                <option value="true">Sí</option>
-                <option value="false">No</option>
-            </select>
-
-            <input 
-                type="date"
-                th:field="*{fechaProbableParto}">
-
-            <input 
-                type="text"
-                th:field="*{estadoPersona}"
-                placeholder="Estado de la persona">
-
-            <input 
-                type="email"
-                th:field="*{correo}"
-                placeholder="Correo electrónico">
-
-            <input 
-                type="number"
-                th:field="*{idDireccion}"
-                placeholder="ID Dirección">
-
-        </div>
-
-        <button type="submit">
-            Guardar Estudiante
-        </button>
-
-    </form>
-
-</div>
-
-<!-- BOTÓN FIJO -->
-<a class="volver" th:href="@{/dashboard}">
-    ← Volver al Dashboard
-</a>
-
+    <!-- JavaScript -->
+    <script th:src="@{/js/registrar-estudiante.js}"></script>
 </body>
 </html>
