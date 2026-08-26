@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import org.springframework.mock.web.MockHttpSession;  // ← IMPORT NUEVO
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.ui.Model;
 
 public class LoginWebControllerTest {
@@ -48,10 +48,10 @@ public class LoginWebControllerTest {
         System.out.println("login");
         LoginModel loginModel = null;
         Model model = null;
-        MockHttpSession session = new MockHttpSession(); // ← CORREGIDO
+        MockHttpSession session = new MockHttpSession();
         LoginWebController instance = new LoginWebController();
         String expResult = "";
-        String result = instance.login(loginModel, model, session); // ← CORREGIDO
+        String result = instance.login(loginModel, model, session);
         assertEquals(expResult, result);
         fail("The test case is a prototype.");
     }
@@ -83,10 +83,11 @@ public class LoginWebControllerTest {
         System.out.println("guardarUsuario");
         String username = "";
         String password = "";
-        MockHttpSession session = new MockHttpSession(); // ← CORREGIDO
+        String rol = "docente";           // ← parámetro nuevo
+        MockHttpSession session = new MockHttpSession();
         LoginWebController instance = new LoginWebController();
         String expResult = "";
-        String result = instance.guardarUsuario(username, password, session); // ← CORREGIDO
+        String result = instance.guardarUsuario(username, password, rol, session); // ← corregido
         assertEquals(expResult, result);
         fail("The test case is a prototype.");
     }
@@ -95,10 +96,10 @@ public class LoginWebControllerTest {
     public void testDeshabilitarUsuario() {
         System.out.println("deshabilitarUsuario");
         Integer id = null;
-        MockHttpSession session = new MockHttpSession(); // ← CORREGIDO
+        MockHttpSession session = new MockHttpSession();
         LoginWebController instance = new LoginWebController();
         String expResult = "";
-        String result = instance.deshabilitarUsuario(id, session); // ← CORREGIDO
+        String result = instance.deshabilitarUsuario(id, session);
         assertEquals(expResult, result);
         fail("The test case is a prototype.");
     }
@@ -109,10 +110,10 @@ public class LoginWebControllerTest {
         Integer id = null;
         String username = "";
         String password = "";
-        MockHttpSession session = new MockHttpSession(); // ← CORREGIDO
+        MockHttpSession session = new MockHttpSession();
         LoginWebController instance = new LoginWebController();
         String expResult = "";
-        String result = instance.actualizarUsuario(id, username, password, session); // ← CORREGIDO
+        String result = instance.actualizarUsuario(id, username, password, session);
         assertEquals(expResult, result);
         fail("The test case is a prototype.");
     }

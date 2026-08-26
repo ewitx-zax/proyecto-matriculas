@@ -69,7 +69,7 @@ public class LoginWebController {
                 .orElse(null);
 
         if (user != null) {
-            if (!"activo".equalsIgnoreCase(user.getEstado())) { // ← solo permite "activo"
+            if (!"activo".equalsIgnoreCase(user.getEstado())) {
                 model.addAttribute("error", "Usuario deshabilitado");
                 return "login";
             }
@@ -116,6 +116,7 @@ public class LoginWebController {
     public String guardarUsuario(
             @RequestParam String username,
             @RequestParam String password,
+            @RequestParam(defaultValue = "docente") String rol,  // ← nuevo parámetro
             HttpSession session) {
 
         User usuarioAccion = (User) session.getAttribute("usuarioLogueado");
@@ -125,10 +126,11 @@ public class LoginWebController {
         nuevoUsuario.setUsername(username);
         nuevoUsuario.setPassword(PasswordHasher.hashPassword(password));
         nuevoUsuario.setIngreso(LocalDateTime.now());
-        nuevoUsuario.setEstado("activo"); // ← en minúscula
+        nuevoUsuario.setEstado("activo");
+        nuevoUsuario.setRol(rol);  // ← asignar rol
         userRepository.save(nuevoUsuario);
 
-        registrarBitacora(usuarioAccion, nuevoUsuario.getIdUsuario(), "REGISTRO", "Se registró un nuevo usuario");
+        registrarBitacora(usuarioAccion, nuevoUsuario.getIdUsuario(), "REGISTRO", "Se registró un nuevo usuario con rol: " + rol);
         return "redirect:/configuracion";
     }
 
@@ -145,7 +147,7 @@ public class LoginWebController {
 
         User usuario = userRepository.findById(id).orElse(null);
         if (usuario != null) {
-            usuario.setEstado("Deshabilitado"); // ← Deshabilitado
+            usuario.setEstado("Deshabilitado");
             userRepository.save(usuario);
             registrarBitacora(usuarioAccion, usuario.getIdUsuario(), "DESHABILITAR", "El usuario deshabilitó otro usuario");
         }

@@ -4,40 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Matrículas INO</title>
-    
-    <!-- CSS -->
     <link rel="stylesheet" th:href="@{/css/login.css}">
 </head>
 <body>
-    <div class="login-container">
-        <h2>Iniciar Sesión</h2>
-        
-        <form th:action="@{/login}" method="post" th:object="${loginModel}">
-            <input type="text" 
-                   th:field="*{username}" 
-                   placeholder="Ingrese su usuario" 
-                   required>
-            
-            <input type="password" 
-                   th:field="*{password}" 
-                   placeholder="Ingrese su contraseña" 
-                   required>
-            
-            <button type="submit">Ingresar</button>
-        </form>
 
-        <!-- Mensaje exitoso -->
-        <p class="mensaje" 
-           th:if="${mensaje}" 
-           th:text="${mensaje}"></p>
-        
-        <!-- Mensaje de error -->
-        <p class="error" 
-           th:if="${error}" 
-           th:text="${error}"></p>
+    <!-- BOTÓN ESQUINA SUPERIOR -->
+    <button class="btn-admin-corner" onclick="abrirModalAdmin()">
+        + Nuevo usuario
+    </button>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+
+            <div class="login-logo">
+                <span class="logo-icono">🎓</span>
+            </div>
+
+            <h2>Matrículas INO</h2>
+            <p class="login-sub">Ingresa tus credenciales para continuar</p>
+
+            <form th:action="@{/login}" method="post" th:object="${loginModel}">
+                <div class="input-group">
+                    <label>Usuario</label>
+                    <input type="text"
+                           th:field="*{username}"
+                           placeholder="Ingresa tu usuario"
+                           required>
+                </div>
+
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <input type="password"
+                           th:field="*{password}"
+                           placeholder="Ingresa tu contraseña"
+                           required>
+                </div>
+
+                <button type="submit" class="btn-ingresar">Ingresar</button>
+            </form>
+
+            <p class="mensaje" th:if="${mensaje}" th:text="${mensaje}"></p>
+            <p class="error"   th:if="${error}"   th:text="${error}"></p>
+        </div>
     </div>
 
-    <!-- JavaScript -->
+    <!-- ===== MODAL PASO 1: ¿Eres admin? ===== -->
+    <div id="modalVerificar" class="modal-overlay" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Acceso restringido</h3>
+                <button class="modal-cerrar" onclick="cerrarTodo()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Esta acción requiere permisos de <strong>administrador</strong>.</p>
+                <p class="modal-sub">¿Tienes credenciales de administrador?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-no"  onclick="cerrarTodo()">No, cancelar</button>
+                <button class="btn-modal-si"  onclick="mostrarCredenciales()">Sí, soy admin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL PASO 2: Credenciales admin ===== -->
+    <div id="modalCredenciales" class="modal-overlay" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Verificar administrador</h3>
+                <button class="modal-cerrar" onclick="cerrarTodo()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="error-admin" class="error-admin" style="display:none;">
+                    Usuario o contraseña incorrectos.
+                </div>
+                <div class="input-group">
+                    <label>Usuario admin</label>
+                    <input type="text" id="admin-user" placeholder="Usuario" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label>Contraseña admin</label>
+                    <input type="password" id="admin-pass" placeholder="Contraseña">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-no" onclick="cerrarTodo()">Cancelar</button>
+                <button class="btn-modal-si" onclick="verificarAdmin()">Verificar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL PASO 3: Crear nuevo usuario ===== -->
+    <div id="modalNuevoUsuario" class="modal-overlay" style="display:none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Nuevo usuario</h3>
+                <button class="modal-cerrar" onclick="cerrarTodo()">✕</button>
+            </div>
+            <form id="formNuevoUsuario" onsubmit="crearUsuario(event)">
+                <div class="modal-body">
+                    <div id="error-crear" class="error-admin" style="display:none;"></div>
+                    <div class="input-group">
+                        <label>Nombre de usuario</label>
+                        <input type="text" id="nuevo-user" placeholder="Usuario" required autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <label>Contraseña</label>
+                        <input type="password" id="nuevo-pass" placeholder="Contraseña" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-no" onclick="cerrarTodo()">Cancelar</button>
+                    <button type="submit" class="btn-modal-si">Crear usuario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast" style="display:none;"></div>
+
     <script th:src="@{/js/login.js}"></script>
 </body>
 </html>

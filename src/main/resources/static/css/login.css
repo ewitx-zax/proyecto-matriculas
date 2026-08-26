@@ -1,68 +1,340 @@
-* {
+/* =========================================
+   LOGIN - Paleta café pálido
+   ========================================= */
+*, *::before, *::after {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(to right, #4facfe, #00f2fe);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    min-height: 100vh;
+    background: #f5ede0;
+    background-image:
+        radial-gradient(ellipse at 20% 50%, #e8d5bc44 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, #d4b89644 0%, transparent 55%);
     display: flex;
-    justify-content: center;
     align-items: center;
-    height: 100vh;
-    margin: 0;
+    justify-content: center;
 }
 
-.login-container {
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    width: 350px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+/* ---- BOTÓN ESQUINA ---- */
+.btn-admin-corner {
+    position: fixed;
+    top: 18px;
+    right: 22px;
+    background: #7a5c3a;
+    color: #fdf6ee;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(100,70,40,0.25);
+    transition: background 0.2s, transform 0.15s;
+    z-index: 100;
+}
+
+.btn-admin-corner:hover {
+    background: #5e4429;
+    transform: translateY(-1px);
+}
+
+/* ---- WRAPPER / CARD ---- */
+.login-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.login-card {
+    background: #fdf6ee;
+    border-radius: 18px;
+    padding: 44px 40px 36px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow:
+        0 2px 0px #c9a87c,
+        0 8px 32px rgba(120, 80, 40, 0.15);
+    border: 1px solid #e8d5bc;
     text-align: center;
 }
 
+/* ---- LOGO ---- */
+.login-logo {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #a07040, #7a5c3a);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 1.8rem;
+    box-shadow: 0 4px 12px rgba(120,80,40,0.3);
+}
+
 h2 {
-    margin-bottom: 20px;
-    color: #333;
+    color: #4a3220;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 6px;
 }
 
-input {
-    width: 90%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
+.login-sub {
+    color: #9a7a5a;
+    font-size: 0.88rem;
+    margin-bottom: 28px;
 }
 
-button {
-    width: 95%;
-    padding: 10px;
-    background: #4facfe;
-    color: white;
+/* ---- INPUTS ---- */
+.input-group {
+    text-align: left;
+    margin-bottom: 16px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #6b4c2e;
+    margin-bottom: 6px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 2px solid #e0c9aa;
+    border-radius: 9px;
+    font-size: 0.93rem;
+    background: #fff9f2;
+    color: #3a2510;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group input:focus {
+    border-color: #a07040;
+    box-shadow: 0 0 0 3px rgba(160,112,64,0.15);
+}
+
+.input-group input::placeholder {
+    color: #c4a882;
+}
+
+/* ---- BOTÓN INGRESAR ---- */
+.btn-ingresar {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #a07040, #7a5c3a);
+    color: #fdf6ee;
     border: none;
-    border-radius: 5px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
     cursor: pointer;
-    font-size: 16px;
-    margin-top: 10px;
+    margin-top: 6px;
+    letter-spacing: 0.4px;
+    box-shadow: 0 4px 14px rgba(120,80,40,0.3);
+    transition: opacity 0.2s, transform 0.15s;
 }
 
-button:hover {
-    background: #008cff;
+.btn-ingresar:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
-/* Mensajes */
+.btn-ingresar:active {
+    transform: translateY(0);
+}
+
+/* ---- MENSAJES ---- */
 .mensaje {
-    color: green;
-    margin-top: 15px;
-    font-weight: bold;
+    margin-top: 14px;
+    color: #2d6a4f;
+    font-size: 0.88rem;
+    background: #d8f3dc;
+    padding: 9px 14px;
+    border-radius: 8px;
 }
 
 .error {
-    color: red;
-    margin-top: 15px;
-    font-weight: bold;
+    margin-top: 14px;
+    color: #7f1d1d;
+    font-size: 0.88rem;
+    background: #fee2e2;
+    padding: 9px 14px;
+    border-radius: 8px;
 }
 
+/* =========================================
+   MODALES
+   ========================================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(60, 35, 10, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.modal {
+    background: #fdf6ee;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(80,45,10,0.3);
+    border: 1px solid #e8d5bc;
+    overflow: hidden;
+    animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px;
+    background: #f5ede0;
+    border-bottom: 1px solid #e8d5bc;
+}
+
+.modal-header h3 {
+    font-size: 1rem;
+    color: #4a3220;
+    font-weight: 700;
+}
+
+.modal-cerrar {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: #b8936a;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.modal-cerrar:hover {
+    background: #f0ddc8;
+    color: #7a5c3a;
+}
+
+.modal-body {
+    padding: 22px 22px 10px;
+}
+
+.modal-body p {
+    color: #5a3e28;
+    font-size: 0.93rem;
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.modal-sub {
+    color: #9a7a5a !important;
+    font-size: 0.85rem !important;
+}
+
+.modal-body .input-group {
+    margin-top: 14px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 22px 20px;
+}
+
+.btn-modal-no {
+    padding: 9px 18px;
+    border: 2px solid #e0c9aa;
+    background: transparent;
+    color: #7a5c3a;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-modal-no:hover {
+    background: #f0ddc8;
+}
+
+.btn-modal-si {
+    padding: 9px 20px;
+    background: linear-gradient(135deg, #a07040, #7a5c3a);
+    color: #fdf6ee;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(120,80,40,0.25);
+    transition: opacity 0.2s;
+}
+
+.btn-modal-si:hover {
+    opacity: 0.88;
+}
+
+/* ---- ERROR DENTRO DEL MODAL ---- */
+.error-admin {
+    background: #fee2e2;
+    color: #7f1d1d;
+    font-size: 0.85rem;
+    padding: 9px 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+/* ---- TOAST ---- */
+.toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4a3220;
+    color: #fdf6ee;
+    padding: 12px 26px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    z-index: 2000;
+    box-shadow: 0 4px 20px rgba(80,45,10,0.3);
+    animation: toastIn 0.3s ease;
+}
+
+.toast.toast-ok    { background: #276749; }
+.toast.toast-error { background: #9b2c2c; }
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translate(-50%, 10px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 480px) {
+    .login-card { padding: 32px 24px 28px; }
+    .btn-admin-corner { top: 12px; right: 12px; font-size: 0.8rem; padding: 8px 14px; }
+}

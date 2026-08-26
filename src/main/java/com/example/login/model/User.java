@@ -13,12 +13,12 @@ public class User {
     private Integer idUsuario;
 
     private String username;
-
     private String password;
-
     private String estado;
-
     private LocalDateTime ingreso;
+
+    @Column(name = "rol")
+    private String rol;  // "administrador" o "docente"
 
     public User() {
     }
@@ -26,7 +26,6 @@ public class User {
     // =========================
     // GETTERS Y SETTERS
     // =========================
-
     public Integer getIdUsuario() {
         return idUsuario;
     }
@@ -65,5 +64,13 @@ public class User {
 
     public void setIngreso(LocalDateTime ingreso) {
         this.ingreso = ingreso;
+    }
+
+    public String getRol() {
+        return rol;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 }
