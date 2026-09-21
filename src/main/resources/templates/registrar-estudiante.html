@@ -4,103 +4,294 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Estudiante - Matrículas INO</title>
-    
-    <!-- CSS -->
     <link rel="stylesheet" th:href="@{/css/registrar-estudiante.css}">
 </head>
 <body>
-    <div class="container">
-        <h1>Registro de Estudiante</h1>
-        
-        <form th:action="@{/guardar-estudiante}" 
-              th:object="${estudiante}" 
-              method="post">
-            
-            <div class="form-grid">
+
+<!-- ===== MODAL INICIAL: ¿Nuevo o ya existe? ===== -->
+<div id="modalTipo" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>¿Qué deseas hacer?</h3>
+        </div>
+        <div class="modal-body opciones">
+            <button class="opcion-btn" onclick="elegir('nuevo')">
+                <span class="opcion-icono">➕</span>
+                <strong>Registrar nuevo estudiante</strong>
+                <small>El estudiante no está en el sistema</small>
+            </button>
+            <button class="opcion-btn" onclick="elegir('existente')">
+                <span class="opcion-icono">🔍</span>
+                <strong>Estudiante ya registrado</strong>
+                <small>Solo actualizar grado o sección</small>
+            </button>
+        </div>
+        <div class="modal-footer">
+            <a th:href="@{/dashboard}" class="btn btn-cancelar">Cancelar</a>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL BUSCAR POR NIE ===== -->
+<div id="modalBuscar" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Buscar estudiante por NIE</h3>
+        </div>
+        <div class="modal-body">
+            <div id="error-buscar" class="error-msg" style="display:none;"></div>
+            <div class="input-group">
+                <label>NIE del estudiante</label>
+                <input type="text" id="nie-buscar" placeholder="Ingresa el NIE" autocomplete="off">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancelar" onclick="volverModal()">← Atrás</button>
+            <button class="btn btn-buscar" onclick="buscarEstudiante()">Buscar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL ACTUALIZAR GRADO ===== -->
+<div id="modalActualizar" class="modal-overlay" style="display:none;">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3>Actualizar matrícula</h3>
+        </div>
+        <div class="modal-body">
+            <div class="alumno-info">
+                <p><strong>Estudiante:</strong> <span id="info-nombre"></span></p>
+                <p><strong>NIE:</strong> <span id="info-nie"></span></p>
+                <p><strong>Matrícula actual:</strong> <span id="info-actual"></span></p>
+            </div>
+            <hr>
+            <p class="modal-sub">Selecciona el nuevo bachillerato, grado y sección:</p>
+
+            <div class="form-grid-modal">
+                <div class="input-group">
+                    <label>Bachillerato</label>
+                    <select id="upd-bachillerato" onchange="cargarGradosModal(this.value)">
+                        <option value="">Seleccione...</option>
+                        <option th:each="b : ${bachilleratos}"
+                                th:value="${b.idBachillerato}"
+                                th:text="${b.nombre}">
+                        </option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Grado</label>
+                    <select id="upd-grado" disabled>
+                        <option value="">Primero seleccione bachillerato</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Sección</label>
+                    <select id="upd-seccion" disabled>
+                        <option value="">Primero seleccione grado</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Año lectivo</label>
+                    <input type="number" id="upd-anio" th:value="${anioActual}" min="2020" max="2099">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancelar" onclick="volverBuscar()">← Atrás</button>
+            <button class="btn btn-guardar" onclick="actualizarMatricula()">Guardar cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== FORMULARIO NUEVO ESTUDIANTE ===== -->
+<div id="formNuevo" style="display:none;">
+<div class="container">
+    <h1>Registro de Estudiante</h1>
+
+    <div id="error-form" class="error-msg" th:if="${error}" th:text="${error}"></div>
+
+    <form th:action="@{/guardar-estudiante}" th:object="${estudiante}" method="post">
+
+        <!-- SECCIÓN: BACHILLERATO -->
+        <div class="seccion-titulo">📚 Bachillerato y Matrícula</div>
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Bachillerato *</label>
+                <select th:field="*{idBachillerato}" onchange="cargarGrados(this.value)" required>
+                    <option value="">Seleccione bachillerato</option>
+                    <option th:each="b : ${bachilleratos}"
+                            th:value="${b.idBachillerato}"
+                            th:text="${b.nombre}">
+                    </option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Grado *</label>
+                <select id="grado-select" th:field="*{idGrado}" onchange="cargarSecciones(this.value)" required disabled>
+                    <option value="">Primero seleccione bachillerato</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Sección *</label>
+                <select id="seccion-select" th:field="*{idSeccion}" required disabled>
+                    <option value="">Primero seleccione grado</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Año lectivo *</label>
+                <input type="number" th:field="*{anioLectivo}" th:value="${anioActual}" min="2020" max="2099" required>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: IDENTIFICACIÓN -->
+        <div class="seccion-titulo">🪪 Identificación</div>
+        <div class="form-grid">
+            <div class="input-group">
+                <label>NIE</label>
                 <input type="text" th:field="*{nie}" placeholder="NIE">
+            </div>
+            <div class="input-group">
+                <label>NUI</label>
                 <input type="text" th:field="*{nui}" placeholder="NUI">
+            </div>
+            <div class="input-group">
+                <label>DUI</label>
                 <input type="text" th:field="*{dui}" placeholder="DUI">
-                
-                <input type="text" th:field="*{primerNombre}" placeholder="Primer Nombre">
+            </div>
+        </div>
+
+        <!-- SECCIÓN: NOMBRES -->
+        <div class="seccion-titulo">👤 Nombres</div>
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Primer Nombre *</label>
+                <input type="text" th:field="*{primerNombre}" placeholder="Primer Nombre" required>
+            </div>
+            <div class="input-group">
+                <label>Segundo Nombre</label>
                 <input type="text" th:field="*{segundoNombre}" placeholder="Segundo Nombre">
+            </div>
+            <div class="input-group">
+                <label>Tercer Nombre</label>
                 <input type="text" th:field="*{tercerNombre}" placeholder="Tercer Nombre">
-                
-                <input type="text" th:field="*{primerApellido}" placeholder="Primer Apellido">
+            </div>
+            <div class="input-group">
+                <label>Primer Apellido *</label>
+                <input type="text" th:field="*{primerApellido}" placeholder="Primer Apellido" required>
+            </div>
+            <div class="input-group">
+                <label>Segundo Apellido</label>
                 <input type="text" th:field="*{segundoApellido}" placeholder="Segundo Apellido">
+            </div>
+            <div class="input-group">
+                <label>Tercer Apellido</label>
                 <input type="text" th:field="*{tercerApellido}" placeholder="Tercer Apellido">
-                
-                <input type="text" 
-                       th:field="*{nombrePartida}" 
-                       class="full-width"
-                       placeholder="Nombre según partida de nacimiento">
-                
+            </div>
+            <div class="input-group full-width">
+                <label>Nombre según partida de nacimiento</label>
+                <input type="text" th:field="*{nombrePartida}" placeholder="Nombre según partida de nacimiento">
+            </div>
+        </div>
+
+        <!-- SECCIÓN: DATOS PERSONALES -->
+        <div class="seccion-titulo">📋 Datos Personales</div>
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Fecha de Nacimiento</label>
                 <input type="date" th:field="*{fechaNacimiento}">
+            </div>
+            <div class="input-group">
+                <label>Nacionalidad</label>
                 <input type="text" th:field="*{nacionalidad}" placeholder="Nacionalidad">
-                
-                <input type="text" 
-                       th:field="*{departamentoNacimiento}" 
-                       placeholder="Departamento de nacimiento">
-                
-                <input type="text" 
-                       th:field="*{municipioNacimiento}" 
-                       placeholder="Municipio de nacimiento">
-                
+            </div>
+            <div class="input-group">
+                <label>Departamento de Nacimiento</label>
+                <input type="text" th:field="*{departamentoNacimiento}" placeholder="Departamento">
+            </div>
+            <div class="input-group">
+                <label>Municipio de Nacimiento</label>
+                <input type="text" th:field="*{municipioNacimiento}" placeholder="Municipio">
+            </div>
+            <div class="input-group">
+                <label>Sexo</label>
                 <select th:field="*{sexo}">
                     <option value="">Seleccione sexo</option>
                     <option value="Masculino">Masculino</option>
                     <option value="Femenino">Femenino</option>
                 </select>
-                
-                <input type="text" 
-                       th:field="*{estadoFamiliar}" 
-                       placeholder="Estado familiar">
-                
-                <input type="text" th:field="*{etnia}" placeholder="Etnia">
-                
-                <select th:field="*{discapacidad}">
-                    <option value="">¿Posee discapacidad?</option>
-                    <option value="true">Sí</option>
-                    <option value="false">No</option>
-                </select>
-                
-                <select th:field="*{trastornoAprendizaje}">
-                    <option value="">¿Trastorno de aprendizaje?</option>
-                    <option value="true">Sí</option>
-                    <option value="false">No</option>
-                </select>
-                
-                <select th:field="*{embarazada}">
-                    <option value="">¿Embarazada?</option>
-                    <option value="true">Sí</option>
-                    <option value="false">No</option>
-                </select>
-                
-                <input type="date" 
-                       th:field="*{fechaProbableParto}">
-                
-                <input type="text" 
-                       th:field="*{estadoPersona}" 
-                       placeholder="Estado de la persona">
-                
-                <input type="email" 
-                       th:field="*{correo}" 
-                       placeholder="Correo electrónico">
-                
-                <input type="number" 
-                       th:field="*{idDireccion}" 
-                       placeholder="ID Dirección">
             </div>
-            
-            <button type="submit">Guardar Estudiante</button>
-        </form>
-    </div>
+            <div class="input-group">
+                <label>Estado Familiar</label>
+                <input type="text" th:field="*{estadoFamiliar}" placeholder="Estado familiar">
+            </div>
+            <div class="input-group">
+                <label>Etnia</label>
+                <input type="text" th:field="*{etnia}" placeholder="Etnia">
+            </div>
+            <div class="input-group">
+                <label>Correo Electrónico</label>
+                <input type="email" th:field="*{correo}" placeholder="correo@ejemplo.com">
+            </div>
+        </div>
 
-    <!-- BOTÓN VOLVER FIJO -->
-    <a class="volver" th:href="@{/dashboard}">
-        ← Volver al Dashboard
-    </a>
+        <!-- SECCIÓN: CONDICIONES -->
+        <div class="seccion-titulo">🏥 Condiciones</div>
+        <div class="form-grid">
+            <div class="input-group">
+                <label>¿Posee discapacidad?</label>
+                <select th:field="*{discapacidad}">
+                    <option value="">Seleccione</option>
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>¿Trastorno de aprendizaje?</label>
+                <select th:field="*{trastornoAprendizaje}">
+                    <option value="">Seleccione</option>
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>¿Embarazada?</label>
+                <select th:field="*{embarazada}" onchange="toggleParto(this.value)">
+                    <option value="">Seleccione</option>
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+            <div class="input-group" id="campo-parto" style="display:none;">
+                <label>Fecha probable de parto</label>
+                <input type="date" th:field="*{fechaProbableParto}">
+            </div>
+            <div class="input-group">
+                <label>Estado de la persona</label>
+                <input type="text" th:field="*{estadoPersona}" placeholder="Ej: Activo">
+            </div>
+            <div class="input-group">
+                <label>ID Dirección</label>
+                <input type="number" th:field="*{idDireccion}" placeholder="ID Dirección">
+            </div>
+        </div>
 
-    <!-- JavaScript -->
-    <script th:src="@{/js/registrar-estudiante.js}"></script>
+        <div class="form-actions">
+            <a th:href="@{/dashboard}" class="btn btn-cancelar">Cancelar</a>
+            <button type="submit" class="btn btn-guardar">Guardar Estudiante</button>
+        </div>
+    </form>
+</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<a class="volver" th:href="@{/dashboard}" id="btn-volver" style="display:none;">← Dashboard</a>
+
+<script th:inline="javascript">
+    const GRADOS_POR_BACHILLERATO  = /*[[${gradosPorBachillerato}]]*/ {};
+    const SECCIONES_POR_GRADO      = /*[[${seccionesPorGrado}]]*/ {};
+</script>
+<script th:src="@{/js/registrar-estudiante.js}"></script>
 </body>
 </html>

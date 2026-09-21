@@ -23,54 +23,21 @@ public class User {
     public User() {
     }
 
-    // =========================
-    // GETTERS Y SETTERS
-    // =========================
-    public Integer getIdUsuario() {
-        return idUsuario;
-    }
+    public Integer getIdUsuario() { return idUsuario; }
+    public void setIdUsuario(Integer idUsuario) { this.idUsuario = idUsuario; }
 
-    public void setIdUsuario(Integer idUsuario) {
-        this.idUsuario = idUsuario;
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    public String getUsername() {
-        return username;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
-    public String getPassword() {
-        return password;
-    }
+    public LocalDateTime getIngreso() { return ingreso; }
+    public void setIngreso(LocalDateTime ingreso) { this.ingreso = ingreso; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-
-    public LocalDateTime getIngreso() {
-        return ingreso;
-    }
-
-    public void setIngreso(LocalDateTime ingreso) {
-        this.ingreso = ingreso;
-    }
-
-    public String getRol() {
-        return rol;
-    }
-
-    public void setRol(String rol) {
-        this.rol = rol;
-    }
+    public String getRol() { return rol; }
+    public void setRol(String rol) { this.rol = rol; }
 }

@@ -47,6 +47,11 @@ async function verificarAdmin() {
             ocultarModal("modalCredenciales");
             document.getElementById("nuevo-user").value = "";
             document.getElementById("nuevo-pass").value = "";
+            // 🔥 NUEVO: Resetear selector de rol
+            const rolSelect = document.getElementById("nuevo-rol");
+            if (rolSelect) {
+                rolSelect.value = "docente";
+            }
             document.getElementById("error-crear").style.display = "none";
             mostrarModal("modalNuevoUsuario");
         } else {
@@ -65,6 +70,9 @@ async function crearUsuario(e) {
 
     const username = document.getElementById("nuevo-user").value.trim();
     const password = document.getElementById("nuevo-pass").value;
+    // 🔥 NUEVO: Obtener el rol seleccionado
+    const rolSelect = document.getElementById("nuevo-rol");
+    const rol = rolSelect ? rolSelect.value : "docente";
     const errorDiv = document.getElementById("error-crear");
 
     if (!username || !password) {
@@ -74,8 +82,13 @@ async function crearUsuario(e) {
     }
 
     try {
-        // Usar el nuevo endpoint que NO requiere sesión
-        const params = new URLSearchParams({ username, password });
+        // 🔥 MODIFICADO: Incluir el rol en los parámetros
+        const params = new URLSearchParams({ 
+            username, 
+            password,
+            rol: rol 
+        });
+        
         const res = await fetch("/crear-usuario-desde-login", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -85,7 +98,6 @@ async function crearUsuario(e) {
         if (res.ok) {
             cerrarTodo();
             mostrarToast("Usuario creado correctamente ✓", "ok");
-            // Opcional: recargar la página o actualizar lista de usuarios
             setTimeout(() => location.reload(), 1500);
         } else {
             const errorMsg = await res.text();
@@ -102,12 +114,17 @@ async function crearUsuario(e) {
 /* ---- HELPERS MODALES ---- */
 function mostrarModal(id) {
     const overlay = document.getElementById(id);
-    overlay.style.display = "flex";
-    overlay.onclick = (e) => { if (e.target === overlay) cerrarTodo(); };
+    if (overlay) {
+        overlay.style.display = "flex";
+        overlay.onclick = (e) => { if (e.target === overlay) cerrarTodo(); };
+    }
 }
 
 function ocultarModal(id) {
-    document.getElementById(id).style.display = "none";
+    const overlay = document.getElementById(id);
+    if (overlay) {
+        overlay.style.display = "none";
+    }
 }
 
 function cerrarTodo() {
@@ -117,10 +134,12 @@ function cerrarTodo() {
 /* ---- TOAST ---- */
 function mostrarToast(msg, tipo = "ok") {
     const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.className = `toast toast-${tipo}`;
-    t.style.display = "block";
-    setTimeout(() => t.style.display = "none", 3500);
+    if (t) {
+        t.textContent = msg;
+        t.className = `toast toast-${tipo}`;
+        t.style.display = "block";
+        setTimeout(() => t.style.display = "none", 3500);
+    }
 }
 
 /* ---- ESC cierra modales ---- */

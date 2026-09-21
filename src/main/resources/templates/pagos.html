@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagos - Matrículas INO</title>
+    <link rel="stylesheet" th:href="@{/css/pagos.css}">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1>Pagos de Alimentos</h1>
+            <p class="subtitle">Control mensual de pagos — $4.00 por estudiante</p>
+        </div>
+    </div>
+
+    <!-- FILTRO MES / AÑO -->
+    <form class="filtro-form" th:action="@{/pagos}" method="get">
+        <select name="mes">
+            <option th:each="i : ${#numbers.sequence(1,12)}"
+                    th:value="${i}"
+                    th:text="${meses[i]}"
+                    th:selected="${i == mes}">
+            </option>
+        </select>
+        <input type="number" name="anio" th:value="${anio}" min="2020" max="2099">
+        <button type="submit" class="btn btn-filtrar">Filtrar</button>
+    </form>
+
+    <!-- RESUMEN -->
+    <div class="resumen">
+        <div class="resumen-card verde">
+            <span class="resumen-num" th:text="${pagados}">0</span>
+            <span class="resumen-label">Pagados</span>
+        </div>
+        <div class="resumen-card rojo">
+            <span class="resumen-num" th:text="${pendientes}">0</span>
+            <span class="resumen-label">Pendientes</span>
+        </div>
+        <div class="resumen-card azul">
+            <span class="resumen-num" th:text="'$' + ${#numbers.formatDecimal(total, 1, 2)}">$0.00</span>
+            <span class="resumen-label">Recaudado</span>
+        </div>
+    </div>
+
+    <!-- TABLA -->
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>NIE</th>
+                    <th>Estudiante</th>
+                    <th>Estado</th>
+                    <th>Fecha pago</th>
+                    <th>Monto</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="f : ${filas}"
+                    th:data-id-estudiante="${f.idEstudiante}"
+                    th:data-id-pago="${f.idPago}"
+                    th:data-estado="${f.estado}">
+
+                    <td th:text="${f.nie}"></td>
+                    <td th:text="${f.nombre}"></td>
+                    <td>
+                        <span th:classappend="${f.estado == 'pagado'} ? 'badge-pagado' :
+                                              (${f.estado == 'pendiente'} ? 'badge-pendiente' : 'badge-sin')"
+                              class="badge"
+                              th:text="${f.estado}">
+                        </span>
+                    </td>
+                    <td th:text="${f.fechaPago != null ? f.fechaPago : '—'}"></td>
+                    <td th:text="${f.monto != null ? '$' + f.monto : '—'}"></td>
+                    <td>
+                        <!-- Si ya pagó: botón anular -->
+                        <button th:if="${f.estado == 'pagado'}"
+                                class="btn btn-anular"
+                                th:data-id-pago="${f.idPago}"
+                                onclick="anularPago(this)">
+                            ✕ Anular
+                        </button>
+                        <!-- Si no pagó: botón registrar -->
+                        <button th:if="${f.estado != 'pagado'}"
+                                class="btn btn-pagar"
+                                th:data-id-estudiante="${f.idEstudiante}"
+                                onclick="registrarPago(this)">
+                            ✔ Registrar pago
+                        </button>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(filas)}">
+                    <td colspan="6" class="estado-vacio">No hay estudiantes registrados.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<!-- Variables Thymeleaf para JS -->
+<input type="hidden" id="mesSel"  th:value="${mes}">
+<input type="hidden" id="anioSel" th:value="${anio}">
+
+<a th:href="@{/dashboard}" class="volver-dashboard">← Dashboard</a>
+
+<script th:src="@{/js/pagos.js}"></script>
+</body>
+</html>

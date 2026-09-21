@@ -14,4 +14,12 @@ public class PasswordHasher {
     public static boolean verifyPassword(String password, String hashedPassword) {
         return encoder.matches(password, hashedPassword);
     }
+
+    public static boolean checkPassword(String password, String password0) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public boolean matches(String password, String password0) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Matrículas INO</title>
+    <link rel="stylesheet" th:href="@{/css/pagos.css}">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1>Reportes</h1>
+            <p class="subtitle">Descargá los datos del sistema en Excel</p>
+        </div>
+    </div>
+
+    <!-- RESUMEN GENERAL -->
+    <div class="resumen">
+        <div class="resumen-card azul">
+            <span class="resumen-num" th:text="${totalEstudiantes}">0</span>
+            <span class="resumen-label">Estudiantes matriculados</span>
+        </div>
+        <div class="resumen-card verde">
+            <span class="resumen-num" th:text="${pagadosMes}">0</span>
+            <span class="resumen-label" th:text="'Pagaron en ' + ${mesActual}">Pagaron este mes</span>
+        </div>
+        <div class="resumen-card rojo">
+            <span class="resumen-num" th:text="'$' + ${#numbers.formatDecimal(totalMes, 1, 2)}">$0.00</span>
+            <span class="resumen-label" th:text="'Recaudado en ' + ${mesActual}">Recaudado</span>
+        </div>
+    </div>
+
+    <!-- TARJETAS DE DESCARGA -->
+    <div class="reportes-grid">
+
+        <!-- REPORTE PAGOS DEL MES -->
+        <div class="reporte-card">
+            <div class="reporte-icono">📊</div>
+            <h3>Pagos por mes</h3>
+            <p>Listado de estudiantes con su estado de pago para el mes seleccionado.</p>
+            <div class="reporte-filtros">
+                <select id="mes-pagos">
+                    <option th:each="i : ${#numbers.sequence(1,12)}"
+                            th:value="${i}"
+                            th:text="${meses[i]}"
+                            th:selected="${i == #dates.day(#dates.createNow())}">
+                    </option>
+                </select>
+                <input type="number" id="anio-pagos"
+                       th:value="${anioActual}" min="2020" max="2099">
+            </div>
+            <a id="btn-excel-pagos" class="btn btn-excel" onclick="descargarPagos()">
+                ⬇ Descargar Excel
+            </a>
+        </div>
+
+        <!-- REPORTE MATRÍCULAS -->
+        <div class="reporte-card">
+            <div class="reporte-icono">🎓</div>
+            <h3>Matrículas</h3>
+            <p>Listado completo de todos los estudiantes matriculados en el sistema.</p>
+            <a th:href="@{/reportes/excel/matriculas}" class="btn btn-excel">
+                ⬇ Descargar Excel
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<a th:href="@{/dashboard}" class="volver-dashboard">← Dashboard</a>
+
+<script>
+function descargarPagos() {
+    const mes  = document.getElementById("mes-pagos").value;
+    const anio = document.getElementById("anio-pagos").value;
+    window.location.href = `/reportes/excel/pagos?mes=${mes}&anio=${anio}`;
+}
+</script>
+</body>
+</html>

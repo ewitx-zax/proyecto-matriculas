@@ -3,140 +3,556 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Matrículas - INO</title>
+    <title>Gestión de Matrículas - Matrículas INO</title>
     <link rel="stylesheet" th:href="@{/css/gestion-matriculas.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== ESTILOS ADICIONALES ===== */
+        .text-muted {
+            color: #6c757d;
+            font-style: italic;
+        }
+        .text-muted i {
+            margin-right: 4px;
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 13px;
+        }
+        .btn-edit {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-edit:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+        
+        /* ===== MODAL LARGE ===== */
+        .modal-large {
+            max-width: 600px;
+        }
+        
+        /* ===== ESTUDIANTE INFO ===== */
+        .estudiante-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .info-item label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: #212529;
+        }
+        
+        /* ===== FORM GRID ===== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 10px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #343a40;
+        }
+        .form-group label i {
+            color: #4a6cf7;
+            margin-right: 4px;
+        }
+        .form-control {
+            padding: 10px 14px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+        .form-control:focus {
+            border-color: #4a6cf7;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+        }
+        .form-control[readonly] {
+            background: #f8f9fa;
+            cursor: not-allowed;
+        }
+        
+        /* ===== ACADEMIC SUMMARY ===== */
+        .academic-summary {
+            margin-top: 20px;
+        }
+        .summary-card {
+            background: rgba(40, 167, 69, 0.08);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            border-radius: 8px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .summary-card i {
+            color: #28a745;
+            font-size: 22px;
+        }
+        .summary-card span {
+            font-size: 14px;
+            color: #212529;
+        }
+        .summary-card strong {
+            color: #28a745;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e9ecef;
+            margin: 18px 0;
+        }
+        
+        h4 {
+            font-size: 15px;
+            color: #343a40;
+            margin-bottom: 6px;
+        }
+        h4 i {
+            color: #4a6cf7;
+            margin-right: 6px;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal-large {
+                max-width: 95%;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
+    <!-- ===== SIDEBAR ===== -->
+    <div class="sidebar">
+        <h2><i class="fas fa-graduation-cap"></i> Matrículas INO</h2>
+        <ul class="menu">
+            <li><a th:href="@{/dashboard}"><i class="fas fa-home"></i> Inicio</a></li>
+            <li><a th:href="@{/registrar-estudiante}"><i class="fas fa-user-plus"></i> Registrar Estudiante</a></li>
+            <li class="active"><a th:href="@{/gestion-matricula}"><i class="fas fa-edit"></i> Gestión de Matrículas</a></li>
+            <li><a th:href="@{/pagos}"><i class="fas fa-money-bill-wave"></i> Pagos</a></li>
+            <li th:if="${session.rolUsuario != null and session.rolUsuario == 'admin'}">
+                <a th:href="@{/reportes}"><i class="fas fa-chart-bar"></i> Reportes</a>
+            </li>
+            <li th:if="${session.rolUsuario != null and session.rolUsuario == 'admin'}">
+                <a th:href="@{/configuracion}"><i class="fas fa-cogs"></i> Configuración</a>
+            </li>
+        </ul>
 
-    <div class="page-header">
-        <div>
-            <h1>Gestión de Matrículas</h1>
-            <p class="subtitle">Administra los registros de estudiantes matriculados</p>
+        <div class="user-info" th:if="${session.usuarioLogueado != null}">
+            <i class="fas fa-user-circle"></i>
+            <span th:text="${session.usuarioLogueado.username}"></span>
+            <span class="role-badge" th:text="${session.rolUsuario}"></span>
         </div>
-        <a th:href="@{/registrar-estudiante}" class="btn btn-nuevo">+ Nuevo Estudiante</a>
+
+        <a class="logout" th:href="@{/logout}">
+            <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+        </a>
     </div>
 
-    <div class="search-bar">
-        <input type="text" id="busqueda" placeholder="🔍 Buscar por nombre, NIE o estado..." oninput="filtrarTabla()">
-        <span id="contador-resultados" class="contador"></span>
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <div class="main-content">
+        <div class="header">
+            <h1><i class="fas fa-edit"></i> Gestión de Matrículas</h1>
+            <p>Actualiza la información académica de los estudiantes</p>
+        </div>
+
+        <!-- ===== TABLA DE ESTUDIANTES ===== -->
+        <div class="table-container">
+            <div class="table-header">
+                <div class="table-title">
+                    <i class="fas fa-users"></i> Lista de Estudiantes
+                </div>
+                <div class="table-actions">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar estudiante..." onkeyup="filtrarTabla()">
+                    </div>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="tablaEstudiantes">
+                    <thead>
+                        <tr>
+                            <th>NIE</th>
+                            <th>Nombre</th>
+                            <th>Bachillerato</th>
+                            <th>Grado</th>
+                            <th>Sección</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="estudiante : ${estudiantes}">
+                            <td><strong th:text="${estudiante.nie}"></strong></td>
+                            <td th:text="${estudiante.nombreCompleto}"></td>
+                            <td>
+                                <span th:if="${estudiante.bachillerato != null}" 
+                                      th:text="${estudiante.bachillerato.nombre}">
+                                </span>
+                                <span th:if="${estudiante.bachillerato == null}" class="text-muted">
+                                    <i class="fas fa-minus-circle"></i> Sin asignar
+                                </span>
+                            </td>
+                            <td>
+                                <span th:if="${estudiante.grado != null}" 
+                                      th:text="${estudiante.grado.nombre}">
+                                </span>
+                                <span th:if="${estudiante.grado == null}" class="text-muted">
+                                    <i class="fas fa-minus-circle"></i> Sin asignar
+                                </span>
+                            </td>
+                            <td>
+                                <span th:if="${estudiante.seccion != null}" 
+                                      th:text="${estudiante.seccion.nombre}">
+                                </span>
+                                <span th:if="${estudiante.seccion == null}" class="text-muted">
+                                    <i class="fas fa-minus-circle"></i> Sin asignar
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-edit btn-sm" 
+                                        onclick="abrirModalMatricula(${estudiante.idEstudiante})"
+                                        title="Actualizar matrícula">
+                                    <i class="fas fa-edit"></i> Actualizar
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <div class="table-wrapper">
-        <table id="tablaMatriculas">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>NIE</th>
-                    <th>Nombre completo</th>
-                    <th>Estado</th>
-                    <th>Correo</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tablaBody">
-                <tr th:each="e : ${estudiantes}"
-                    th:data-id="${e.idEstudiante}"
-                    th:data-nie="${e.nie}"
-                    th:data-nombre="${(e.primerNombre != null ? e.primerNombre : '') + ' ' + (e.primerApellido != null ? e.primerApellido : '')}"
-                    th:data-estado="${e.estadoPersona}"
-                    th:data-correo="${e.correo}">
-
-                    <td th:text="${e.idEstudiante}"></td>
-                    <td th:text="${e.nie != null ? e.nie : '—'}"></td>
-                    <td th:text="${(e.primerNombre != null ? e.primerNombre : '') + ' '
-                                 + (e.segundoNombre != null ? e.segundoNombre : '') + ' '
-                                 + (e.primerApellido != null ? e.primerApellido : '') + ' '
-                                 + (e.segundoApellido != null ? e.segundoApellido : '')}">
-                    </td>
-                    <td>
-                        <span th:classappend="${e.estadoPersona == 'Activo' ? 'badge-activa' :
-                                               e.estadoPersona == 'Inactivo' ? 'badge-inactiva' : 'badge-pendiente'}"
-                              class="badge"
-                              th:text="${e.estadoPersona != null ? e.estadoPersona : '—'}">
-                        </span>
-                    </td>
-                    <td th:text="${e.correo != null ? e.correo : '—'}"></td>
-                    <td>
-                        <div class="acciones">
-                            <button class="btn btn-editar" onclick="abrirEdicion(this)">✏️ Editar</button>
-                            <button class="btn btn-eliminar" onclick="pedirConfirmacion(this)">🗑 Eliminar</button>
+    <!-- ===== MODAL ACTUALIZAR MATRÍCULA ===== -->
+    <div id="modalMatricula" class="modal-overlay" style="display:none;">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-graduate"></i> Actualizar Matrícula</h3>
+                <button class="modal-cerrar" onclick="cerrarModalMatricula()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Información del estudiante -->
+                <div class="estudiante-info">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label><i class="fas fa-user"></i> Estudiante:</label>
+                            <span id="estudianteNombre" class="info-value">-</span>
                         </div>
-                    </td>
-                </tr>
+                        <div class="info-item">
+                            <label><i class="fas fa-id-card"></i> NIE:</label>
+                            <span id="estudianteNie" class="info-value">-</span>
+                        </div>
+                        <div class="info-item" style="grid-column: 1 / -1;">
+                            <label><i class="fas fa-graduation-cap"></i> Matrícula actual:</label>
+                            <span id="matriculaActual" class="info-value">-</span>
+                        </div>
+                    </div>
+                </div>
 
-                <!-- Sin registros -->
-                <tr th:if="${#lists.isEmpty(estudiantes)}">
-                    <td colspan="6" class="estado-vacio">No hay estudiantes registrados.</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+                <hr>
 
-<!-- MODAL EDICIÓN -->
-<div id="modalEdicion" class="modal-overlay" style="display:none;">
-    <div class="modal">
-        <div class="modal-header">
-            <h2>Editar Estudiante</h2>
-            <button class="modal-cerrar" onclick="cerrarModal()">✕</button>
-        </div>
-        <form id="formEdicion" onsubmit="guardarEdicion(event)">
-            <input type="hidden" id="edit-id">
-            <div class="form-grid">
-                <div class="form-group full-width">
-                    <label>Nombre completo</label>
-                    <input type="text" id="edit-nombre" placeholder="Nombre completo" required>
+                <!-- Selectores académicos -->
+                <h4><i class="fas fa-edit"></i> Selecciona el nuevo bachillerato, grado y sección:</h4>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label><i class="fas fa-school"></i> Bachillerato</label>
+                        <select id="selectBachillerato" class="form-control" onchange="cargarGrados()">
+                            <option value="">Seleccione...</option>
+                            <option th:each="b : ${bachilleratos}" 
+                                    th:value="${b.idBachillerato}" 
+                                    th:text="${b.nombre}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-layer-group"></i> Grado</label>
+                        <select id="selectGrado" class="form-control" onchange="actualizarResumen()">
+                            <option value="">Primero seleccione bachillerato</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-users"></i> Sección</label>
+                        <select id="selectSeccion" class="form-control" onchange="actualizarResumen()">
+                            <option value="">Primero seleccione grado</option>
+                            <option th:each="s : ${secciones}" 
+                                    th:value="${s.idSeccion}" 
+                                    th:text="${s.nombre}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar-alt"></i> Año lectivo</label>
+                        <input type="number" id="anioLectivo" 
+                               th:value="${anioActual}" 
+                               class="form-control" readonly>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>NIE</label>
-                    <input type="text" id="edit-nie" placeholder="NIE">
-                </div>
-                <div class="form-group">
-                    <label>Estado</label>
-                    <select id="edit-estado">
-                        <option value="Activo">Activo</option>
-                        <option value="Inactivo">Inactivo</option>
-                        <option value="Pendiente">Pendiente</option>
-                    </select>
-                </div>
-                <div class="form-group full-width">
-                    <label>Correo electrónico</label>
-                    <input type="email" id="edit-correo" placeholder="correo@ejemplo.com">
+
+                <!-- Resumen -->
+                <div class="academic-summary" id="academicSummary" style="display:none;">
+                    <div class="summary-card">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="summaryText">Estudiante asignado a: <strong>-</strong></span>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-cancelar" onclick="cerrarModal()">Cancelar</button>
-                <button type="submit" class="btn btn-guardar">Guardar cambios</button>
+                <button class="btn-modal-no" onclick="cerrarModalMatricula()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button class="btn-modal-si" onclick="guardarMatricula()">
+                    <i class="fas fa-save"></i> Guardar cambios
+                </button>
             </div>
-        </form>
-    </div>
-</div>
-
-<!-- MODAL ELIMINAR -->
-<div id="modalEliminar" class="modal-overlay" style="display:none;">
-    <div class="modal modal-sm">
-        <div class="modal-header">
-            <h2>Confirmar eliminación</h2>
-            <button class="modal-cerrar" onclick="cerrarModalEliminar()">✕</button>
-        </div>
-        <div class="modal-body">
-            <p>¿Estás seguro de eliminar a <strong id="nombre-a-eliminar"></strong>?</p>
-            <p class="aviso">Esta acción no se puede deshacer.</p>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-cancelar" onclick="cerrarModalEliminar()">Cancelar</button>
-            <button class="btn btn-eliminar" onclick="confirmarEliminar()">Eliminar</button>
         </div>
     </div>
-</div>
 
-<!-- TOAST -->
-<div id="toast" class="toast" style="display:none;"></div>
+    <!-- ===== TOAST ===== -->
+    <div id="toast" class="toast" style="display:none;"></div>
 
-<a th:href="@{/dashboard}" class="volver-dashboard">← Dashboard</a>
+    <!-- ===== SCRIPTS ===== -->
+    <script>
+        let estudianteId = null;
 
-<script th:src="@{/js/gestion-matriculas.js}"></script>
+        function abrirModalMatricula(id) {
+            estudianteId = id;
+
+            // Obtener datos del estudiante
+            fetch('/api/estudiantes/' + id)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('estudianteNombre').textContent = data.nombreCompleto || 'N/A';
+                    document.getElementById('estudianteNie').textContent = data.nie || 'N/A';
+
+                    let matriculaActual = 'Sin asignar';
+                    if (data.grado && data.seccion && data.bachillerato) {
+                        matriculaActual = data.grado.nombre + ' ' + data.seccion.nombre + ' - ' + data.bachillerato.nombre;
+                    } else if (data.grado && data.seccion) {
+                        matriculaActual = data.grado.nombre + ' ' + data.seccion.nombre;
+                    } else if (data.grado) {
+                        matriculaActual = data.grado.nombre;
+                    }
+                    document.getElementById('matriculaActual').textContent = matriculaActual;
+
+                    // Cargar datos actuales en los selectores
+                    if (data.bachillerato) {
+                        document.getElementById('selectBachillerato').value = data.bachillerato.idBachillerato;
+                        cargarGrados(() => {
+                            if (data.grado) {
+                                document.getElementById('selectGrado').value = data.grado.idGrado;
+                            }
+                            if (data.seccion) {
+                                document.getElementById('selectSeccion').value = data.seccion.idSeccion;
+                            }
+                            actualizarResumen();
+                        });
+                    } else {
+                        // Resetear selectores
+                        document.getElementById('selectBachillerato').value = '';
+                        document.getElementById('selectGrado').innerHTML = '<option value="">Primero seleccione bachillerato</option>';
+                        document.getElementById('selectSeccion').value = '';
+                        document.getElementById('academicSummary').style.display = 'none';
+                    }
+
+                    document.getElementById('modalMatricula').style.display = 'flex';
+                })
+                .catch(error => {
+                    mostrarToast('Error al cargar los datos del estudiante', 'error');
+                    console.error(error);
+                });
+        }
+
+        function cerrarModalMatricula() {
+            document.getElementById('modalMatricula').style.display = 'none';
+            estudianteId = null;
+            document.getElementById('academicSummary').style.display = 'none';
+        }
+
+        function cargarGrados(callback) {
+            const idBachillerato = document.getElementById('selectBachillerato').value;
+            const gradoSelect = document.getElementById('selectGrado');
+
+            if (!idBachillerato) {
+                gradoSelect.innerHTML = '<option value="">Primero seleccione bachillerato</option>';
+                document.getElementById('academicSummary').style.display = 'none';
+                if (callback) callback();
+                return;
+            }
+
+            fetch('/api/grados/' + idBachillerato)
+                .then(response => response.json())
+                .then(grados => {
+                    gradoSelect.innerHTML = '<option value="">Seleccione grado</option>';
+                    grados.forEach(g => {
+                        const option = document.createElement('option');
+                        option.value = g.idGrado;
+                        option.textContent = g.nombre;
+                        gradoSelect.appendChild(option);
+                    });
+                    if (callback) callback();
+                    actualizarResumen();
+                })
+                .catch(error => {
+                    console.error('Error cargando grados:', error);
+                    mostrarToast('Error al cargar los grados', 'error');
+                });
+        }
+
+        function actualizarResumen() {
+            const bachillerato = document.getElementById('selectBachillerato');
+            const grado = document.getElementById('selectGrado');
+            const seccion = document.getElementById('selectSeccion');
+            const summary = document.getElementById('academicSummary');
+            const summaryText = document.getElementById('summaryText');
+
+            if (bachillerato.value && grado.value && seccion.value) {
+                const bachNombre = bachillerato.options[bachillerato.selectedIndex]?.text || '';
+                const gradoNombre = grado.options[grado.selectedIndex]?.text || '';
+                const seccionNombre = seccion.options[seccion.selectedIndex]?.text || '';
+
+                summaryText.innerHTML = `Estudiante asignado a: <strong>${gradoNombre} ${seccionNombre}</strong> de <strong>${bachNombre}</strong>`;
+                summary.style.display = 'block';
+            } else {
+                summary.style.display = 'none';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('selectBachillerato').addEventListener('change', actualizarResumen);
+        document.getElementById('selectGrado').addEventListener('change', actualizarResumen);
+        document.getElementById('selectSeccion').addEventListener('change', actualizarResumen);
+
+        function guardarMatricula() {
+            const bachilleratoId = document.getElementById('selectBachillerato').value;
+            const gradoId = document.getElementById('selectGrado').value;
+            const seccionId = document.getElementById('selectSeccion').value;
+
+            if (!bachilleratoId || !gradoId || !seccionId) {
+                mostrarToast('Por favor selecciona bachillerato, grado y sección', 'error');
+                return;
+            }
+
+            const data = {
+                idBachillerato: parseInt(bachilleratoId),
+                idGrado: parseInt(gradoId),
+                idSeccion: parseInt(seccionId),
+                anioLectivo: parseInt(document.getElementById('anioLectivo').value)
+            };
+
+            fetch('/api/estudiantes/' + estudianteId + '/matricula', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarToast('Matrícula actualizada correctamente ✓', 'ok');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    mostrarToast(data.message || 'Error al actualizar la matrícula', 'error');
+                }
+            })
+            .catch(error => {
+                mostrarToast('Error de conexión', 'error');
+                console.error(error);
+            });
+        }
+
+        function mostrarToast(msg, tipo = 'ok') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast toast-${tipo}`;
+            t.style.display = 'flex';
+            setTimeout(() => t.style.display = 'none', 3500);
+        }
+
+        // Filtrar tabla
+        function filtrarTabla() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('tablaEstudiantes');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let found = false;
+                for (let j = 0; j < cells.length; j++) {
+                    const cellText = cells[j].textContent.toLowerCase();
+                    if (cellText.indexOf(filter) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
+                rows[i].style.display = found ? '' : 'none';
+            }
+        }
+
+        // Cerrar modal con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') cerrarModalMatricula();
+        });
+
+        // Cerrar modal haciendo clic fuera
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

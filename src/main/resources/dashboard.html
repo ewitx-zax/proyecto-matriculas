@@ -127,22 +127,27 @@
         <ul class="menu">
             <li><a th:href="@{/dashboard}">Inicio</a></li>
 
-            <!-- CORREGIDO -->
             <li><a th:href="@{/registrar-estudiante}">
                 Registrar Estudiante
             </a></li>
 
-            <!-- CORREGIDO -->
             <li><a th:href="@{/gestion-matricula}">
                 Gestión de Matrículas
             </a></li>
 
             <li><a href="#">Pagos</a></li>
-            <li><a href="#">Reportes</a></li>
 
-            <li><a th:href="@{/configuracion}">
-                Configuración
-            </a></li>
+            <!-- 🔥 REPORTES: solo administrador -->
+            <li th:if="${rol != null and rol == 'administrador'}">
+                <a th:href="@{/reportes}">Reportes</a>
+            </li>
+
+            <!-- 🔥 CONFIGURACIÓN: solo administrador -->
+            <li th:if="${rol != null and rol == 'administrador'}">
+                <a th:href="@{/configuracion}">
+                    Configuración
+                </a>
+            </li>
         </ul>
     </div>
 
@@ -158,27 +163,27 @@
 
             <div class="card">
                 <h3>Estudiantes Registrados</h3>
-                <p>0 estudiantes</p>
+                <p th:text="${totalEstudiantes} + ' estudiantes'">0 estudiantes</p>
             </div>
 
             <div class="card">
                 <h3>Matrículas Activas</h3>
-                <p>0 matrículas</p>
+                <p th:text="${matriculasActivas} + ' matrículas'">0 matrículas</p>
             </div>
 
             <div class="card">
                 <h3>Pagos Pendientes</h3>
-                <p>0 pagos</p>
+                <p th:text="${pagosPendientes} + ' pagos'">0 pagos</p>
             </div>
 
             <div class="card">
-                <h3>Reportes Generados</h3>
-                <p>0 reportes</p>
+                <h3>Total Recaudado del Mes</h3>
+                <p th:text="'$' + ${totalMes}">$0</p>
             </div>
 
         </div>
 
-        <a class="logout" th:href="@{/}">
+        <a class="logout" th:href="@{/logout}">
             Cerrar sesión
         </a>
 
