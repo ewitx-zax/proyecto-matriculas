@@ -94,7 +94,7 @@ public class LoginWebController {
                 user.setIngreso(LocalDateTime.now());
                 userRepository.save(user);
                 session.setAttribute("usuarioLogueado", user);
-                session.setAttribute("rolUsuario", user.getRol());   // 🔥 NUEVA LÍNEA
+                session.setAttribute("rolUsuario", user.getRol());
                 registrarBitacora(user, user.getIdUsuario(), "LOGIN", "El usuario inició sesión");
                 return "redirect:/dashboard";
             }
@@ -333,17 +333,25 @@ public class LoginWebController {
     }
 
     // =========================
-    // CREAR USUARIO DESDE LOGIN (sin sesión)
+    // CREAR USUARIO DESDE LOGIN (verificado por admin)
     // =========================
     @PostMapping("/api/crear-usuario")
     @ResponseBody
-    public ResponseEntity<?> crearUsuarioDesdeLogin(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> crearUsuarioDesdeLogin(@RequestBody Map<String, String> body,
+                                                     HttpSession session) {
+
+        // ✅ Validar que el admin haya sido verificado previamente
+        Boolean adminVerificado = (Boolean) session.getAttribute("adminVerificado");
+        if (adminVerificado == null || !adminVerificado) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No autorizado");
+        }
+
         String username = body.get("username");
         String password = body.get("password");
         String rol      = body.getOrDefault("rol", "docente");
 
         if (username == null || password == null)
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("Faltan datos");
 
         if (userRepository.findByUsername(username).isPresent())
             return ResponseEntity.status(HttpStatus.CONFLICT).body("El usuario ya existe");
@@ -355,6 +363,9 @@ public class LoginWebController {
         u.setEstado("activo");
         u.setIngreso(LocalDateTime.now());
         userRepository.save(u);
+
+        // Limpiar la marca de verificación tras crear el usuario
+        session.removeAttribute("adminVerificado");
 
         return ResponseEntity.ok().build();
     }
