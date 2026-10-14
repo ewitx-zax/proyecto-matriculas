@@ -38,16 +38,15 @@ async function verificarAdmin() {
         });
 
         if (res.ok) {
-            // IMPORTANTE: Guardar en sesión que el admin fue verificado
+            // Guardar en sesión que el admin fue verificado
             await fetch("/api/guardar-verificacion-admin", {
                 method: "POST"
             });
-            
+
             // Mostrar modal de nuevo usuario
             ocultarModal("modalCredenciales");
             document.getElementById("nuevo-user").value = "";
             document.getElementById("nuevo-pass").value = "";
-            // Resetear selector de rol
             const rolSelect = document.getElementById("nuevo-rol");
             if (rolSelect) {
                 rolSelect.value = "docente";
