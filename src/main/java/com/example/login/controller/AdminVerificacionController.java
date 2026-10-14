@@ -3,6 +3,7 @@ package com.example.login.controller;
 import com.example.login.model.User;
 import com.example.login.repository.UserRepository;
 import com.example.login.security.PasswordHasher;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,8 +21,6 @@ public class AdminVerificacionController {
      * Verifica que el usuario sea administrador.
      * POST /api/verificar-admin
      * Body: { "username": "...", "password": "..." }
-     *
-     * Requiere: estado = "activo" Y rol = "administrador"
      */
     @PostMapping("/verificar-admin")
     public ResponseEntity<?> verificarAdmin(@RequestBody Map<String, String> body) {
@@ -45,10 +44,20 @@ public class AdminVerificacionController {
         if (!PasswordHasher.verifyPassword(password, user.getPassword()))
             return ResponseEntity.status(401).build();
 
-        // No es administrador
-        if (!"administrador".equalsIgnoreCase(user.getRol()))
+        // ✅ CORREGIDO: "admin" (coincide con LoginWebController y el HTML)
+        if (!"admin".equalsIgnoreCase(user.getRol()))
             return ResponseEntity.status(403).build();
 
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Marca en sesión que el admin fue verificado.
+     * POST /api/guardar-verificacion-admin
+     */
+    @PostMapping("/guardar-verificacion-admin")
+    public ResponseEntity<?> guardarVerificacionAdmin(HttpSession session) {
+        session.setAttribute("adminVerificado", true);
         return ResponseEntity.ok().build();
     }
 }
