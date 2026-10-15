@@ -60,8 +60,4 @@ public class AdminVerificacionController {
         session.setAttribute("adminVerificado", true);
         return ResponseEntity.ok().build();
     }
-<<<<<<< Updated upstream
 }
-=======
-}
->>>>>>> Stashed changes
