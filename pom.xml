@@ -40,7 +40,7 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        <!-- BCrypt (solo el encriptador, sin toda la seguridad) -->
+        <!-- BCrypt -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
@@ -63,6 +63,14 @@
             <artifactId>poi-ooxml</artifactId>
             <version>5.2.5</version>
         </dependency>
+
+        <!-- ✅ AÑADIDO: OpenPDF para generar los reportes en PDF -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>1.3.39</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

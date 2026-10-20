@@ -19,145 +19,40 @@
             padding: 6px 14px;
             font-size: 13px;
         }
-        .btn-edit {
-            background: #ffc107;
-            color: #212529;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-edit:hover {
-            background: #e0a800;
-            transform: translateY(-2px);
-        }
-        
-        /* ===== MODAL LARGE ===== */
-        .modal-large {
-            max-width: 600px;
-        }
-        
-        /* ===== ESTUDIANTE INFO ===== */
-        .estudiante-info {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-        }
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .info-item label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .info-value {
-            font-size: 15px;
-            font-weight: 500;
-            color: #212529;
-        }
-        
-        /* ===== FORM GRID ===== */
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-top: 10px;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .form-group label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #343a40;
-        }
-        .form-group label i {
-            color: #4a6cf7;
-            margin-right: 4px;
-        }
-        .form-control {
-            padding: 10px 14px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
-            background: white;
-        }
-        .form-control:focus {
-            border-color: #4a6cf7;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
-        }
-        .form-control[readonly] {
-            background: #f8f9fa;
-            cursor: not-allowed;
-        }
-        
-        /* ===== ACADEMIC SUMMARY ===== */
-        .academic-summary {
-            margin-top: 20px;
-        }
-        .summary-card {
-            background: rgba(40, 167, 69, 0.08);
-            border: 1px solid rgba(40, 167, 69, 0.2);
-            border-radius: 8px;
-            padding: 14px 18px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .summary-card i {
-            color: #28a745;
-            font-size: 22px;
-        }
-        .summary-card span {
-            font-size: 14px;
-            color: #212529;
-        }
-        .summary-card strong {
-            color: #28a745;
-        }
-        
+
         hr {
             border: none;
             border-top: 1px solid #e9ecef;
             margin: 18px 0;
         }
-        
-        h4 {
-            font-size: 15px;
-            color: #343a40;
-            margin-bottom: 6px;
+
+        /* ===== INDICADOR DE ESTADO (live) ===== */
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #16a34a;
+            font-weight: 600;
+            background: #dcfce7;
+            padding: 4px 12px;
+            border-radius: 12px;
         }
-        h4 i {
-            color: #4a6cf7;
-            margin-right: 6px;
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #16a34a;
+            animation: pulse 1.5s infinite;
         }
-        
+        @keyframes pulse {
+            0%   { opacity: 1;   transform: scale(1); }
+            50%  { opacity: 0.4; transform: scale(0.85); }
+            100% { opacity: 1;   transform: scale(1); }
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
             .modal-large {
                 max-width: 95%;
             }
@@ -185,7 +80,8 @@
         <div class="user-info" th:if="${session.usuarioLogueado != null}">
             <i class="fas fa-user-circle"></i>
             <span th:text="${session.usuarioLogueado.username}"></span>
-            <span class="role-badge" th:text="${session.rolUsuario}"></span>
+            <span class="role-badge"
+                  th:text="${session.rolUsuario == 'admin'} ? 'Admin' : 'Docente'">Rol</span>
         </div>
 
         <a class="logout" th:href="@{/logout}">
@@ -197,7 +93,7 @@
     <div class="main-content">
         <div class="header">
             <h1><i class="fas fa-edit"></i> Gestión de Matrículas</h1>
-            <p>Actualiza la información académica de los estudiantes</p>
+            <p>Listado de estudiantes registrados en el sistema</p>
         </div>
 
         <!-- ===== TABLA DE ESTUDIANTES ===== -->
@@ -205,11 +101,16 @@
             <div class="table-header">
                 <div class="table-title">
                     <i class="fas fa-users"></i> Lista de Estudiantes
+                    <span class="live-indicator" style="margin-left: 12px;">
+                        <span class="live-dot"></span> En vivo
+                    </span>
                 </div>
                 <div class="table-actions">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="searchInput" placeholder="Buscar estudiante..." onkeyup="filtrarTabla()">
+                        <input type="text" id="searchInput"
+                               placeholder="Buscar por NIE, nombre, bachillerato..."
+                               oninput="filtrarTabla()">
                     </div>
                 </div>
             </div>
@@ -222,137 +123,44 @@
                             <th>Bachillerato</th>
                             <th>Grado</th>
                             <th>Sección</th>
-                            <th>Acción</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tablaBody">
+                        <!-- Renderizado por Thymeleaf al cargar -->
                         <tr th:each="estudiante : ${estudiantes}">
                             <td><strong th:text="${estudiante.nie}"></strong></td>
                             <td th:text="${estudiante.nombreCompleto}"></td>
                             <td>
-                                <span th:if="${estudiante.bachillerato != null}" 
-                                      th:text="${estudiante.bachillerato.nombre}">
-                                </span>
+                                <span th:if="${estudiante.bachillerato != null}"
+                                      th:text="${estudiante.bachillerato.nombre}"></span>
                                 <span th:if="${estudiante.bachillerato == null}" class="text-muted">
                                     <i class="fas fa-minus-circle"></i> Sin asignar
                                 </span>
                             </td>
                             <td>
-                                <span th:if="${estudiante.grado != null}" 
-                                      th:text="${estudiante.grado.nombre}">
-                                </span>
+                                <span th:if="${estudiante.grado != null}"
+                                      th:text="${estudiante.grado.nombre}"></span>
                                 <span th:if="${estudiante.grado == null}" class="text-muted">
                                     <i class="fas fa-minus-circle"></i> Sin asignar
                                 </span>
                             </td>
                             <td>
-                                <span th:if="${estudiante.seccion != null}" 
-                                      th:text="${estudiante.seccion.nombre}">
-                                </span>
+                                <span th:if="${estudiante.seccion != null}"
+                                      th:text="${estudiante.seccion.nombre}"></span>
                                 <span th:if="${estudiante.seccion == null}" class="text-muted">
                                     <i class="fas fa-minus-circle"></i> Sin asignar
                                 </span>
                             </td>
-                            <td>
-                                <button class="btn btn-edit btn-sm" 
-                                        onclick="abrirModalMatricula(${estudiante.idEstudiante})"
-                                        title="Actualizar matrícula">
-                                    <i class="fas fa-edit"></i> Actualizar
-                                </button>
+                        </tr>
+                        <!-- Mensaje si no hay estudiantes -->
+                        <tr th:if="${#lists.isEmpty(estudiantes)}" id="filaVacia">
+                            <td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">
+                                <i class="fas fa-inbox" style="font-size:24px; display:block; margin-bottom:8px;"></i>
+                                No hay estudiantes registrados todavía
                             </td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== MODAL ACTUALIZAR MATRÍCULA ===== -->
-    <div id="modalMatricula" class="modal-overlay" style="display:none;">
-        <div class="modal modal-large">
-            <div class="modal-header">
-                <h3><i class="fas fa-user-graduate"></i> Actualizar Matrícula</h3>
-                <button class="modal-cerrar" onclick="cerrarModalMatricula()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <!-- Información del estudiante -->
-                <div class="estudiante-info">
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label><i class="fas fa-user"></i> Estudiante:</label>
-                            <span id="estudianteNombre" class="info-value">-</span>
-                        </div>
-                        <div class="info-item">
-                            <label><i class="fas fa-id-card"></i> NIE:</label>
-                            <span id="estudianteNie" class="info-value">-</span>
-                        </div>
-                        <div class="info-item" style="grid-column: 1 / -1;">
-                            <label><i class="fas fa-graduation-cap"></i> Matrícula actual:</label>
-                            <span id="matriculaActual" class="info-value">-</span>
-                        </div>
-                    </div>
-                </div>
-
-                <hr>
-
-                <!-- Selectores académicos -->
-                <h4><i class="fas fa-edit"></i> Selecciona el nuevo bachillerato, grado y sección:</h4>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label><i class="fas fa-school"></i> Bachillerato</label>
-                        <select id="selectBachillerato" class="form-control" onchange="cargarGrados()">
-                            <option value="">Seleccione...</option>
-                            <option th:each="b : ${bachilleratos}" 
-                                    th:value="${b.idBachillerato}" 
-                                    th:text="${b.nombre}">
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label><i class="fas fa-layer-group"></i> Grado</label>
-                        <select id="selectGrado" class="form-control" onchange="actualizarResumen()">
-                            <option value="">Primero seleccione bachillerato</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label><i class="fas fa-users"></i> Sección</label>
-                        <select id="selectSeccion" class="form-control" onchange="actualizarResumen()">
-                            <option value="">Primero seleccione grado</option>
-                            <option th:each="s : ${secciones}" 
-                                    th:value="${s.idSeccion}" 
-                                    th:text="${s.nombre}">
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label><i class="fas fa-calendar-alt"></i> Año lectivo</label>
-                        <input type="number" id="anioLectivo" 
-                               th:value="${anioActual}" 
-                               class="form-control" readonly>
-                    </div>
-                </div>
-
-                <!-- Resumen -->
-                <div class="academic-summary" id="academicSummary" style="display:none;">
-                    <div class="summary-card">
-                        <i class="fas fa-check-circle"></i>
-                        <span id="summaryText">Estudiante asignado a: <strong>-</strong></span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-modal-no" onclick="cerrarModalMatricula()">
-                    <i class="fas fa-times"></i> Cancelar
-                </button>
-                <button class="btn-modal-si" onclick="guardarMatricula()">
-                    <i class="fas fa-save"></i> Guardar cambios
-                </button>
             </div>
         </div>
     </div>
@@ -362,197 +170,99 @@
 
     <!-- ===== SCRIPTS ===== -->
     <script>
-        let estudianteId = null;
+        /* ============================================
+           BÚSQUEDA + REFRESCO EN VIVO (polling)
+           ============================================ */
 
-        function abrirModalMatricula(id) {
-            estudianteId = id;
+        // Filtra las filas visibles según el texto del buscador
+        function filtrarTabla() {
+            const filtro = document.getElementById('searchInput').value.toLowerCase().trim();
+            const filas = document.querySelectorAll('#tablaBody tr');
+            let visibles = 0;
 
-            // Obtener datos del estudiante
-            fetch('/api/estudiantes/' + id)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('estudianteNombre').textContent = data.nombreCompleto || 'N/A';
-                    document.getElementById('estudianteNie').textContent = data.nie || 'N/A';
+            filas.forEach(fila => {
+                if (fila.id === 'filaVacia') return;
 
-                    let matriculaActual = 'Sin asignar';
-                    if (data.grado && data.seccion && data.bachillerato) {
-                        matriculaActual = data.grado.nombre + ' ' + data.seccion.nombre + ' - ' + data.bachillerato.nombre;
-                    } else if (data.grado && data.seccion) {
-                        matriculaActual = data.grado.nombre + ' ' + data.seccion.nombre;
-                    } else if (data.grado) {
-                        matriculaActual = data.grado.nombre;
-                    }
-                    document.getElementById('matriculaActual').textContent = matriculaActual;
-
-                    // Cargar datos actuales en los selectores
-                    if (data.bachillerato) {
-                        document.getElementById('selectBachillerato').value = data.bachillerato.idBachillerato;
-                        cargarGrados(() => {
-                            if (data.grado) {
-                                document.getElementById('selectGrado').value = data.grado.idGrado;
-                            }
-                            if (data.seccion) {
-                                document.getElementById('selectSeccion').value = data.seccion.idSeccion;
-                            }
-                            actualizarResumen();
-                        });
-                    } else {
-                        // Resetear selectores
-                        document.getElementById('selectBachillerato').value = '';
-                        document.getElementById('selectGrado').innerHTML = '<option value="">Primero seleccione bachillerato</option>';
-                        document.getElementById('selectSeccion').value = '';
-                        document.getElementById('academicSummary').style.display = 'none';
-                    }
-
-                    document.getElementById('modalMatricula').style.display = 'flex';
-                })
-                .catch(error => {
-                    mostrarToast('Error al cargar los datos del estudiante', 'error');
-                    console.error(error);
-                });
-        }
-
-        function cerrarModalMatricula() {
-            document.getElementById('modalMatricula').style.display = 'none';
-            estudianteId = null;
-            document.getElementById('academicSummary').style.display = 'none';
-        }
-
-        function cargarGrados(callback) {
-            const idBachillerato = document.getElementById('selectBachillerato').value;
-            const gradoSelect = document.getElementById('selectGrado');
-
-            if (!idBachillerato) {
-                gradoSelect.innerHTML = '<option value="">Primero seleccione bachillerato</option>';
-                document.getElementById('academicSummary').style.display = 'none';
-                if (callback) callback();
-                return;
-            }
-
-            fetch('/api/grados/' + idBachillerato)
-                .then(response => response.json())
-                .then(grados => {
-                    gradoSelect.innerHTML = '<option value="">Seleccione grado</option>';
-                    grados.forEach(g => {
-                        const option = document.createElement('option');
-                        option.value = g.idGrado;
-                        option.textContent = g.nombre;
-                        gradoSelect.appendChild(option);
-                    });
-                    if (callback) callback();
-                    actualizarResumen();
-                })
-                .catch(error => {
-                    console.error('Error cargando grados:', error);
-                    mostrarToast('Error al cargar los grados', 'error');
-                });
-        }
-
-        function actualizarResumen() {
-            const bachillerato = document.getElementById('selectBachillerato');
-            const grado = document.getElementById('selectGrado');
-            const seccion = document.getElementById('selectSeccion');
-            const summary = document.getElementById('academicSummary');
-            const summaryText = document.getElementById('summaryText');
-
-            if (bachillerato.value && grado.value && seccion.value) {
-                const bachNombre = bachillerato.options[bachillerato.selectedIndex]?.text || '';
-                const gradoNombre = grado.options[grado.selectedIndex]?.text || '';
-                const seccionNombre = seccion.options[seccion.selectedIndex]?.text || '';
-
-                summaryText.innerHTML = `Estudiante asignado a: <strong>${gradoNombre} ${seccionNombre}</strong> de <strong>${bachNombre}</strong>`;
-                summary.style.display = 'block';
-            } else {
-                summary.style.display = 'none';
-            }
-        }
-
-        // Event listeners
-        document.getElementById('selectBachillerato').addEventListener('change', actualizarResumen);
-        document.getElementById('selectGrado').addEventListener('change', actualizarResumen);
-        document.getElementById('selectSeccion').addEventListener('change', actualizarResumen);
-
-        function guardarMatricula() {
-            const bachilleratoId = document.getElementById('selectBachillerato').value;
-            const gradoId = document.getElementById('selectGrado').value;
-            const seccionId = document.getElementById('selectSeccion').value;
-
-            if (!bachilleratoId || !gradoId || !seccionId) {
-                mostrarToast('Por favor selecciona bachillerato, grado y sección', 'error');
-                return;
-            }
-
-            const data = {
-                idBachillerato: parseInt(bachilleratoId),
-                idGrado: parseInt(gradoId),
-                idSeccion: parseInt(seccionId),
-                anioLectivo: parseInt(document.getElementById('anioLectivo').value)
-            };
-
-            fetch('/api/estudiantes/' + estudianteId + '/matricula', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    mostrarToast('Matrícula actualizada correctamente ✓', 'ok');
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    mostrarToast(data.message || 'Error al actualizar la matrícula', 'error');
-                }
-            })
-            .catch(error => {
-                mostrarToast('Error de conexión', 'error');
-                console.error(error);
+                const texto = fila.textContent.toLowerCase();
+                const coincide = !filtro || texto.indexOf(filtro) > -1;
+                fila.style.display = coincide ? '' : 'none';
+                if (coincide) visibles++;
             });
+
+            // Mostrar mensaje si el filtro no encuentra nada
+            const filaVacia = document.getElementById('filaVacia');
+            if (filaVacia) {
+                if (visibles === 0 && filtro) {
+                    filaVacia.style.display = '';
+                    filaVacia.querySelector('td').innerHTML =
+                        '<i class="fas fa-search" style="font-size:24px; display:block; margin-bottom:8px;"></i>' +
+                        'No se encontraron resultados para "<strong>' + filtro + '</strong>"';
+                } else if (visibles === 0 && !filtro) {
+                    filaVacia.style.display = '';
+                    filaVacia.querySelector('td').innerHTML =
+                        '<i class="fas fa-inbox" style="font-size:24px; display:block; margin-bottom:8px;"></i>' +
+                        'No hay estudiantes registrados todavía';
+                } else {
+                    filaVacia.style.display = 'none';
+                }
+            }
         }
 
+        // Refresca la tabla desde el backend cada 10s (registros nuevos aparecen solos)
+        function refrescarTabla() {
+            fetch('/api/estudiantes/listado')
+                .then(r => {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.json();
+                })
+                .then(estudiantes => {
+                    const tbody = document.getElementById('tablaBody');
+                    if (!tbody) return;
+
+                    if (estudiantes.length === 0) {
+                        tbody.innerHTML = `
+                            <tr id="filaVacia">
+                                <td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">
+                                    <i class="fas fa-inbox" style="font-size:24px; display:block; margin-bottom:8px;"></i>
+                                    No hay estudiantes registrados todavía
+                                </td>
+                            </tr>`;
+                    } else {
+                        tbody.innerHTML = estudiantes.map(e => `
+                            <tr>
+                                <td><strong>${e.nie ?? ''}</strong></td>
+                                <td>${e.nombreCompleto ?? ''}</td>
+                                <td>${e.bachillerato
+                                    ? e.bachillerato.nombre
+                                    : '<span class="text-muted"><i class="fas fa-minus-circle"></i> Sin asignar</span>'}</td>
+                                <td>${e.grado
+                                    ? e.grado.nombre
+                                    : '<span class="text-muted"><i class="fas fa-minus-circle"></i> Sin asignar</span>'}</td>
+                                <td>${e.seccion
+                                    ? e.seccion.nombre
+                                    : '<span class="text-muted"><i class="fas fa-minus-circle"></i> Sin asignar</span>'}</td>
+                            </tr>
+                        `).join('');
+                    }
+
+                    // Reaplicar el filtro si el usuario está buscando algo
+                    filtrarTabla();
+                })
+                .catch(err => console.warn('Refresco falló:', err));
+        }
+
+        // Refrescar cada 10 segundos
+        setInterval(refrescarTabla, 10000);
+
+        /* ---- TOAST ---- */
         function mostrarToast(msg, tipo = 'ok') {
             const t = document.getElementById('toast');
+            if (!t) return;
             t.textContent = msg;
             t.className = `toast toast-${tipo}`;
             t.style.display = 'flex';
             setTimeout(() => t.style.display = 'none', 3500);
         }
-
-        // Filtrar tabla
-        function filtrarTabla() {
-            const input = document.getElementById('searchInput');
-            const filter = input.value.toLowerCase();
-            const table = document.getElementById('tablaEstudiantes');
-            const rows = table.getElementsByTagName('tr');
-
-            for (let i = 1; i < rows.length; i++) {
-                const cells = rows[i].getElementsByTagName('td');
-                let found = false;
-                for (let j = 0; j < cells.length; j++) {
-                    const cellText = cells[j].textContent.toLowerCase();
-                    if (cellText.indexOf(filter) > -1) {
-                        found = true;
-                        break;
-                    }
-                }
-                rows[i].style.display = found ? '' : 'none';
-            }
-        }
-
-        // Cerrar modal con ESC
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') cerrarModalMatricula();
-        });
-
-        // Cerrar modal haciendo clic fuera
-        document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.style.display = 'none';
-                }
-            });
-        });
     </script>
 </body>
 </html>
