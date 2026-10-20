@@ -50,9 +50,17 @@ public class LoginWebController {
         "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
     };
 
-    // ---- helper rol ----
+    // ---- helpers ----
+    private User usuarioDeSesion(HttpSession session) {
+        return (User) session.getAttribute("usuarioLogueado");
+    }
+
+    private boolean haySesion(HttpSession session) {
+        return usuarioDeSesion(session) != null;
+    }
+
     private boolean esAdmin(HttpSession session) {
-        User u = (User) session.getAttribute("usuarioLogueado");
+        User u = usuarioDeSesion(session);
         return u != null && "admin".equalsIgnoreCase(u.getRol());
     }
 
@@ -74,7 +82,10 @@ public class LoginWebController {
     // LOGIN
     // =========================
     @GetMapping("/")
-    public String mostrarLogin(Model model) {
+    public String mostrarLogin(Model model, HttpSession session) {
+        // ✅ Si ya hay sesión, no mostrar login otra vez
+        if (haySesion(session)) return "redirect:/dashboard";
+
         model.addAttribute("loginModel", new LoginModel());
         return "login";
     }
@@ -105,10 +116,13 @@ public class LoginWebController {
     }
 
     // =========================
-    // DASHBOARD
+    // DASHBOARD — protegido
     // =========================
     @GetMapping("/dashboard")
     public String mostrarDashboard(Model model, HttpSession session) {
+        // ✅ BLOQUEO: sin sesión → login
+        if (!haySesion(session)) return "redirect:/";
+
         int mesActual  = LocalDate.now().getMonthValue();
         int anioActual = LocalDate.now().getYear();
 
@@ -135,7 +149,7 @@ public class LoginWebController {
     public String mostrarReportes(Model model, HttpSession session, RedirectAttributes ra) {
         if (!esAdmin(session)) {
             ra.addFlashAttribute("error", "No tienes permisos para acceder a Reportes");
-            return "redirect:/dashboard";
+            return "redirect:/";
         }
 
         int mesActual  = LocalDate.now().getMonthValue();
@@ -163,7 +177,7 @@ public class LoginWebController {
     public String mostrarConfiguracion(Model model, HttpSession session, RedirectAttributes ra) {
         if (!esAdmin(session)) {
             ra.addFlashAttribute("error", "No tienes permisos para acceder a Configuración");
-            return "redirect:/dashboard";
+            return "redirect:/";
         }
         model.addAttribute("usuarios", userRepository.findAll());
         return "configuracion";
@@ -192,7 +206,7 @@ public class LoginWebController {
         u.setRol(rol);
         userRepository.save(u);
 
-        registrarBitacora((User) session.getAttribute("usuarioLogueado"),
+        registrarBitacora(usuarioDeSesion(session),
             u.getIdUsuario(), "REGISTRO", "Se registró usuario con rol: " + rol);
         ra.addFlashAttribute("success", "Usuario creado exitosamente");
         return "redirect:/configuracion";
@@ -204,13 +218,13 @@ public class LoginWebController {
     @GetMapping("/deshabilitar/{id}")
     public String deshabilitarUsuario(@PathVariable Integer id,
                                        HttpSession session, RedirectAttributes ra) {
-        if (!esAdmin(session)) return "redirect:/dashboard";
+        if (!esAdmin(session)) return "redirect:/";
 
         User usuario = userRepository.findById(id).orElse(null);
         if (usuario != null) {
             usuario.setEstado("Deshabilitado");
             userRepository.save(usuario);
-            registrarBitacora((User) session.getAttribute("usuarioLogueado"),
+            registrarBitacora(usuarioDeSesion(session),
                 usuario.getIdUsuario(), "DESHABILITAR", "Usuario deshabilitado");
             ra.addFlashAttribute("success", "Usuario deshabilitado");
         }
@@ -225,14 +239,14 @@ public class LoginWebController {
                                      @RequestParam String username,
                                      @RequestParam String password,
                                      HttpSession session, RedirectAttributes ra) {
-        if (!esAdmin(session)) return "redirect:/dashboard";
+        if (!esAdmin(session)) return "redirect:/";
 
         User usuario = userRepository.findById(id).orElse(null);
         if (usuario != null) {
             usuario.setUsername(username);
             usuario.setPassword(PasswordHasher.hashPassword(password));
             userRepository.save(usuario);
-            registrarBitacora((User) session.getAttribute("usuarioLogueado"),
+            registrarBitacora(usuarioDeSesion(session),
                 usuario.getIdUsuario(), "EDITAR", "Usuario editado");
             ra.addFlashAttribute("success", "Usuario actualizado");
         }
@@ -240,13 +254,12 @@ public class LoginWebController {
     }
 
     // =========================
-    // REGISTRAR ESTUDIANTE
+    // REGISTRAR ESTUDIANTE — protegido
     // =========================
     @GetMapping("/registrar-estudiante")
     public String mostrarRegistroEstudiante(Model model, HttpSession session,
                                              RedirectAttributes ra) {
-        User usuario = (User) session.getAttribute("usuarioLogueado");
-        if (usuario == null) return "redirect:/";
+        if (!haySesion(session)) return "redirect:/";
 
         model.addAttribute("estudiante", new Estudiante());
 
@@ -292,8 +305,8 @@ public class LoginWebController {
     public String guardarEstudiante(@ModelAttribute Estudiante estudiante,
                                      Model model, HttpSession session,
                                      RedirectAttributes ra) {
-        User usuario = (User) session.getAttribute("usuarioLogueado");
-        if (usuario == null) return "redirect:/";
+        if (!haySesion(session)) return "redirect:/";
+        User usuario = usuarioDeSesion(session);
 
         try {
             estudianteRepository.save(estudiante);
@@ -310,12 +323,11 @@ public class LoginWebController {
     }
 
     // =========================
-    // GESTIÓN MATRÍCULA
+    // GESTIÓN MATRÍCULA — protegido
     // =========================
     @GetMapping("/gestion-matricula")
     public String mostrarGestionMatricula(Model model, HttpSession session) {
-        User usuario = (User) session.getAttribute("usuarioLogueado");
-        if (usuario == null) return "redirect:/";
+        if (!haySesion(session)) return "redirect:/";
         model.addAttribute("estudiantes", estudianteRepository.findAll());
         return "gestion-matricula";
     }
@@ -325,7 +337,7 @@ public class LoginWebController {
     // =========================
     @GetMapping("/logout")
     public String logout(HttpSession session) {
-        User usuario = (User) session.getAttribute("usuarioLogueado");
+        User usuario = usuarioDeSesion(session);
         if (usuario != null)
             registrarBitacora(usuario, usuario.getIdUsuario(), "LOGOUT", "Cerró sesión");
         session.invalidate();
@@ -340,7 +352,6 @@ public class LoginWebController {
     public ResponseEntity<?> crearUsuarioDesdeLogin(@RequestBody Map<String, String> body,
                                                      HttpSession session) {
 
-        // ✅ Validar que el admin haya sido verificado previamente
         Boolean adminVerificado = (Boolean) session.getAttribute("adminVerificado");
         if (adminVerificado == null || !adminVerificado) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No autorizado");
@@ -364,7 +375,6 @@ public class LoginWebController {
         u.setIngreso(LocalDateTime.now());
         userRepository.save(u);
 
-        // Limpiar la marca de verificación tras crear el usuario
         session.removeAttribute("adminVerificado");
 
         return ResponseEntity.ok().build();

@@ -38,12 +38,6 @@ async function verificarAdmin() {
         });
 
         if (res.ok) {
-            // Guardar en sesión que el admin fue verificado
-            await fetch("/api/guardar-verificacion-admin", {
-                method: "POST"
-            });
-
-            // Mostrar modal de nuevo usuario
             ocultarModal("modalCredenciales");
             document.getElementById("nuevo-user").value = "";
             document.getElementById("nuevo-pass").value = "";
