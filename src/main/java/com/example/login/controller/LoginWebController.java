@@ -16,8 +16,21 @@ import com.example.login.repository.SeccionRepository;
 import com.example.login.repository.UserRepository;
 import com.example.login.security.PasswordHasher;
 
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import java.awt.Color;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -64,6 +77,13 @@ public class LoginWebController {
         return u != null && "admin".equalsIgnoreCase(u.getRol());
     }
 
+    // ✅ Evita que el navegador guarde en caché las páginas protegidas
+    private void noCache(HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Expires", "0");
+    }
+
     // =========================
     // BITÁCORA
     // =========================
@@ -82,8 +102,8 @@ public class LoginWebController {
     // LOGIN
     // =========================
     @GetMapping("/")
-    public String mostrarLogin(Model model, HttpSession session) {
-        // ✅ Si ya hay sesión, no mostrar login otra vez
+    public String mostrarLogin(Model model, HttpSession session, HttpServletResponse response) {
+        noCache(response);
         if (haySesion(session)) return "redirect:/dashboard";
 
         model.addAttribute("loginModel", new LoginModel());
@@ -92,7 +112,8 @@ public class LoginWebController {
 
     @PostMapping("/login")
     public String login(@ModelAttribute LoginModel loginModel,
-                        Model model, HttpSession session) {
+                        Model model, HttpSession session,
+                        HttpServletResponse response) {
 
         User user = userRepository.findByUsername(loginModel.getUsername()).orElse(null);
 
@@ -119,9 +140,10 @@ public class LoginWebController {
     // DASHBOARD — protegido
     // =========================
     @GetMapping("/dashboard")
-    public String mostrarDashboard(Model model, HttpSession session) {
-        // ✅ BLOQUEO: sin sesión → login
+    public String mostrarDashboard(Model model, HttpSession session,
+                                    HttpServletResponse response) {
         if (!haySesion(session)) return "redirect:/";
+        noCache(response);
 
         int mesActual  = LocalDate.now().getMonthValue();
         int anioActual = LocalDate.now().getYear();
@@ -146,11 +168,14 @@ public class LoginWebController {
     // REPORTES — solo admin
     // =========================
     @GetMapping("/reportes")
-    public String mostrarReportes(Model model, HttpSession session, RedirectAttributes ra) {
+    public String mostrarReportes(Model model, HttpSession session,
+                                   HttpServletResponse response,
+                                   RedirectAttributes ra) {
         if (!esAdmin(session)) {
             ra.addFlashAttribute("error", "No tienes permisos para acceder a Reportes");
             return "redirect:/";
         }
+        noCache(response);
 
         int mesActual  = LocalDate.now().getMonthValue();
         int anioActual = LocalDate.now().getYear();
@@ -171,14 +196,128 @@ public class LoginWebController {
     }
 
     // =========================
+    // REPORTES PDF — solo admin
+    // =========================
+    @GetMapping("/reportes/pdf/pagos")
+    public void pdfPagos(@RequestParam int mes,
+                         @RequestParam int anio,
+                         HttpServletResponse response,
+                         HttpSession session) throws IOException {
+
+        if (!esAdmin(session)) {
+            response.sendRedirect("/");
+            return;
+        }
+
+        // ⚠️ Ajusta a tu repositorio real
+        var pagos = pagoRepository.findByMesAndAnioAndEstado(mes, anio, "pagado");
+
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition",
+            "attachment; filename=pagos_" + MESES[mes] + "_" + anio + ".pdf");
+
+        Document doc = new Document(PageSize.A4);
+        PdfWriter.getInstance(doc, response.getOutputStream());
+        doc.open();
+
+        Font tituloFont = new Font(Font.HELVETICA, 18, Font.BOLD, new Color(30, 41, 59));
+        Paragraph titulo = new Paragraph(
+            "Reporte de Pagos - " + MESES[mes] + " " + anio, tituloFont);
+        titulo.setAlignment(Element.ALIGN_CENTER);
+        titulo.setSpacingAfter(20);
+        doc.add(titulo);
+
+        PdfPTable tabla = new PdfPTable(3);
+        tabla.setWidthPercentage(100);
+        tabla.setWidths(new float[]{4f, 2f, 2f});
+
+        Font headerFont = new Font(Font.HELVETICA, 11, Font.BOLD, Color.WHITE);
+        for (String h : new String[]{"Estudiante", "NIE", "Estado"}) {
+            PdfPCell cell = new PdfPCell(new Paragraph(h, headerFont));
+            cell.setBackgroundColor(new Color(59, 130, 246));
+            cell.setPadding(8);
+            tabla.addCell(cell);
+        }
+
+        Font bodyFont = new Font(Font.HELVETICA, 10);
+        for (var p : pagos) {
+            // ⚠️ Ajusta estos getters a tu entidad Pago
+            tabla.addCell(new Paragraph("-", bodyFont));
+            tabla.addCell(new Paragraph("-", bodyFont));
+            tabla.addCell(new Paragraph(
+                p.getEstado() != null ? p.getEstado() : "-", bodyFont));
+        }
+
+        doc.add(tabla);
+        doc.close();
+    }
+
+    @GetMapping("/reportes/pdf/matriculas")
+    public void pdfMatriculas(HttpServletResponse response,
+                              HttpSession session) throws IOException {
+
+        if (!esAdmin(session)) {
+            response.sendRedirect("/");
+            return;
+        }
+
+        var estudiantes = estudianteRepository.findAll();
+
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition",
+            "attachment; filename=matriculas.pdf");
+
+        Document doc = new Document(PageSize.A4.rotate());
+        PdfWriter.getInstance(doc, response.getOutputStream());
+        doc.open();
+
+        Font tituloFont = new Font(Font.HELVETICA, 18, Font.BOLD, new Color(30, 41, 59));
+        Paragraph titulo = new Paragraph("Reporte de Matrículas", tituloFont);
+        titulo.setAlignment(Element.ALIGN_CENTER);
+        titulo.setSpacingAfter(20);
+        doc.add(titulo);
+
+        PdfPTable tabla = new PdfPTable(5);
+        tabla.setWidthPercentage(100);
+        tabla.setWidths(new float[]{2f, 4f, 3f, 2f, 2f});
+
+        Font headerFont = new Font(Font.HELVETICA, 11, Font.BOLD, Color.WHITE);
+        for (String h : new String[]{"NIE", "Nombre", "Bachillerato", "Grado", "Sección"}) {
+            PdfPCell cell = new PdfPCell(new Paragraph(h, headerFont));
+            cell.setBackgroundColor(new Color(59, 130, 246));
+            cell.setPadding(8);
+            tabla.addCell(cell);
+        }
+
+        Font bodyFont = new Font(Font.HELVETICA, 10);
+        for (var e : estudiantes) {
+            tabla.addCell(new Paragraph(e.getNie() != null ? e.getNie() : "-", bodyFont));
+            tabla.addCell(new Paragraph(
+                e.getNombreCompleto() != null ? e.getNombreCompleto() : "-", bodyFont));
+            tabla.addCell(new Paragraph(
+                e.getBachillerato() != null ? e.getBachillerato().getNombre() : "Sin asignar", bodyFont));
+            tabla.addCell(new Paragraph(
+                e.getGrado() != null ? e.getGrado().getNombre() : "Sin asignar", bodyFont));
+            tabla.addCell(new Paragraph(
+                e.getSeccion() != null ? e.getSeccion().getNombre() : "Sin asignar", bodyFont));
+        }
+
+        doc.add(tabla);
+        doc.close();
+    }
+
+    // =========================
     // CONFIGURACIÓN — solo admin
     // =========================
     @GetMapping("/configuracion")
-    public String mostrarConfiguracion(Model model, HttpSession session, RedirectAttributes ra) {
+    public String mostrarConfiguracion(Model model, HttpSession session,
+                                        HttpServletResponse response,
+                                        RedirectAttributes ra) {
         if (!esAdmin(session)) {
             ra.addFlashAttribute("error", "No tienes permisos para acceder a Configuración");
             return "redirect:/";
         }
+        noCache(response);
         model.addAttribute("usuarios", userRepository.findAll());
         return "configuracion";
     }
@@ -258,8 +397,10 @@ public class LoginWebController {
     // =========================
     @GetMapping("/registrar-estudiante")
     public String mostrarRegistroEstudiante(Model model, HttpSession session,
+                                             HttpServletResponse response,
                                              RedirectAttributes ra) {
         if (!haySesion(session)) return "redirect:/";
+        noCache(response);
 
         model.addAttribute("estudiante", new Estudiante());
 
@@ -326,21 +467,40 @@ public class LoginWebController {
     // GESTIÓN MATRÍCULA — protegido
     // =========================
     @GetMapping("/gestion-matricula")
-    public String mostrarGestionMatricula(Model model, HttpSession session) {
+    public String mostrarGestionMatricula(Model model, HttpSession session,
+                                           HttpServletResponse response) {
         if (!haySesion(session)) return "redirect:/";
+        noCache(response);
         model.addAttribute("estudiantes", estudianteRepository.findAll());
         return "gestion-matricula";
     }
 
     // =========================
-    // LOGOUT
+    // LOGOUT — cierre total
     // =========================
     @GetMapping("/logout")
-    public String logout(HttpSession session) {
+    public String logout(HttpSession session, HttpServletResponse response) {
         User usuario = usuarioDeSesion(session);
         if (usuario != null)
             registrarBitacora(usuario, usuario.getIdUsuario(), "LOGOUT", "Cerró sesión");
+
+        // 1. Borrar atributos explícitamente
+        session.removeAttribute("usuarioLogueado");
+        session.removeAttribute("rolUsuario");
+        session.removeAttribute("adminVerificado");
+
+        // 2. Invalidar sesión completa
         session.invalidate();
+
+        // 3. Borrar cookie JSESSIONID del navegador
+        Cookie cookie = new Cookie("JSESSIONID", "");
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        response.addCookie(cookie);
+
+        // 4. Cabeceras anti-caché para que "Atrás" no muestre el dashboard
+        noCache(response);
+
         return "redirect:/";
     }
 
