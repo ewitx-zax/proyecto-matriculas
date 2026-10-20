@@ -5,6 +5,7 @@ import com.example.login.model.Bitacora;
 import com.example.login.model.Estudiante;
 import com.example.login.model.Grado;
 import com.example.login.model.LoginModel;
+import com.example.login.model.Pago;
 import com.example.login.model.Seccion;
 import com.example.login.model.User;
 import com.example.login.repository.BachilleratoRepository;
@@ -209,8 +210,7 @@ public class LoginWebController {
             return;
         }
 
-        // ⚠️ Ajusta a tu repositorio real
-        var pagos = pagoRepository.findByMesAndAnioAndEstado(mes, anio, "pagado");
+        List<Pago> pagos = pagoRepository.findByMesAndAnio(mes, anio);
 
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition",
@@ -220,32 +220,80 @@ public class LoginWebController {
         PdfWriter.getInstance(doc, response.getOutputStream());
         doc.open();
 
+        // ---- Título ----
         Font tituloFont = new Font(Font.HELVETICA, 18, Font.BOLD, new Color(30, 41, 59));
         Paragraph titulo = new Paragraph(
             "Reporte de Pagos - " + MESES[mes] + " " + anio, tituloFont);
         titulo.setAlignment(Element.ALIGN_CENTER);
-        titulo.setSpacingAfter(20);
+        titulo.setSpacingAfter(8);
         doc.add(titulo);
 
-        PdfPTable tabla = new PdfPTable(3);
+        // ---- Subtítulo con resumen ----
+        long pagados    = pagos.stream()
+            .filter(p -> "pagado".equalsIgnoreCase(p.getEstado())).count();
+        long pendientes = pagos.size() - pagados;
+
+        Double totalRecaudado = pagoRepository.totalRecaudado(mes, anio);
+        if (totalRecaudado == null) totalRecaudado = 0.0;
+
+        Font subFont = new Font(Font.HELVETICA, 11, Font.NORMAL, new Color(100, 116, 139));
+        Paragraph sub = new Paragraph(
+            "Pagados: " + pagados + "   |   Pendientes: " + pendientes
+            + "   |   Recaudado: $" + String.format("%.2f", totalRecaudado),
+            subFont);
+        sub.setAlignment(Element.ALIGN_CENTER);
+        sub.setSpacingAfter(20);
+        doc.add(sub);
+
+        // ---- Tabla ----
+        PdfPTable tabla = new PdfPTable(5);
         tabla.setWidthPercentage(100);
-        tabla.setWidths(new float[]{4f, 2f, 2f});
+        tabla.setWidths(new float[]{2f, 4f, 2.5f, 2f, 2.5f});
 
         Font headerFont = new Font(Font.HELVETICA, 11, Font.BOLD, Color.WHITE);
-        for (String h : new String[]{"Estudiante", "NIE", "Estado"}) {
+        for (String h : new String[]{"NIE", "Estudiante", "Monto", "Estado", "Fecha de pago"}) {
             PdfPCell cell = new PdfPCell(new Paragraph(h, headerFont));
             cell.setBackgroundColor(new Color(59, 130, 246));
             cell.setPadding(8);
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             tabla.addCell(cell);
         }
 
         Font bodyFont = new Font(Font.HELVETICA, 10);
-        for (var p : pagos) {
-            // ⚠️ Ajusta estos getters a tu entidad Pago
-            tabla.addCell(new Paragraph("-", bodyFont));
-            tabla.addCell(new Paragraph("-", bodyFont));
-            tabla.addCell(new Paragraph(
-                p.getEstado() != null ? p.getEstado() : "-", bodyFont));
+        Color verdeTexto = new Color(22, 163, 74);
+        Color rojoTexto  = new Color(220, 38, 38);
+
+        for (Pago p : pagos) {
+            String nie    = (p.getEstudiante() != null && p.getEstudiante().getNie() != null)
+                            ? p.getEstudiante().getNie() : "-";
+            String nombre = (p.getEstudiante() != null && p.getEstudiante().getNombreCompleto() != null)
+                            ? p.getEstudiante().getNombreCompleto() : "-";
+            String monto  = p.getMonto() != null
+                            ? "$" + String.format("%.2f", p.getMonto()) : "$0.00";
+            String estado = p.getEstado() != null ? p.getEstado() : "-";
+            String fecha  = p.getFechaPago() != null
+                            ? p.getFechaPago().toString() : "-";
+
+            tabla.addCell(new Paragraph(nie, bodyFont));
+            tabla.addCell(new Paragraph(nombre, bodyFont));
+            tabla.addCell(new Paragraph(monto, bodyFont));
+
+            Font estadoFont = "pagado".equalsIgnoreCase(estado)
+                ? new Font(Font.HELVETICA, 10, Font.BOLD, verdeTexto)
+                : new Font(Font.HELVETICA, 10, Font.BOLD, rojoTexto);
+            tabla.addCell(new Paragraph(estado, estadoFont));
+
+            tabla.addCell(new Paragraph(fecha, bodyFont));
+        }
+
+        if (pagos.isEmpty()) {
+            PdfPCell cellVacia = new PdfPCell(
+                new Paragraph("No hay pagos registrados para este mes.",
+                    new Font(Font.HELVETICA, 10, Font.ITALIC, new Color(148, 163, 184))));
+            cellVacia.setColspan(5);
+            cellVacia.setPadding(20);
+            cellVacia.setHorizontalAlignment(Element.ALIGN_CENTER);
+            tabla.addCell(cellVacia);
         }
 
         doc.add(tabla);
@@ -261,7 +309,7 @@ public class LoginWebController {
             return;
         }
 
-        var estudiantes = estudianteRepository.findAll();
+        List<Estudiante> estudiantes = estudianteRepository.findAll();
 
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition",
@@ -286,11 +334,12 @@ public class LoginWebController {
             PdfPCell cell = new PdfPCell(new Paragraph(h, headerFont));
             cell.setBackgroundColor(new Color(59, 130, 246));
             cell.setPadding(8);
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             tabla.addCell(cell);
         }
 
         Font bodyFont = new Font(Font.HELVETICA, 10);
-        for (var e : estudiantes) {
+        for (Estudiante e : estudiantes) {
             tabla.addCell(new Paragraph(e.getNie() != null ? e.getNie() : "-", bodyFont));
             tabla.addCell(new Paragraph(
                 e.getNombreCompleto() != null ? e.getNombreCompleto() : "-", bodyFont));
@@ -498,7 +547,7 @@ public class LoginWebController {
         cookie.setPath("/");
         response.addCookie(cookie);
 
-        // 4. Cabeceras anti-caché para que "Atrás" no muestre el dashboard
+        // 4. Cabeceras anti-caché
         noCache(response);
 
         return "redirect:/";
