@@ -78,7 +78,6 @@ public class LoginWebController {
         return u != null && "admin".equalsIgnoreCase(u.getRol());
     }
 
-    // ✅ Evita que el navegador guarde en caché las páginas protegidas
     private void noCache(HttpServletResponse response) {
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("Pragma", "no-cache");
@@ -106,7 +105,6 @@ public class LoginWebController {
     public String mostrarLogin(Model model, HttpSession session, HttpServletResponse response) {
         noCache(response);
         if (haySesion(session)) return "redirect:/dashboard";
-
         model.addAttribute("loginModel", new LoginModel());
         return "login";
     }
@@ -138,7 +136,7 @@ public class LoginWebController {
     }
 
     // =========================
-    // DASHBOARD — protegido
+    // DASHBOARD
     // =========================
     @GetMapping("/dashboard")
     public String mostrarDashboard(Model model, HttpSession session,
@@ -205,10 +203,7 @@ public class LoginWebController {
                          HttpServletResponse response,
                          HttpSession session) throws IOException {
 
-        if (!esAdmin(session)) {
-            response.sendRedirect("/");
-            return;
-        }
+        if (!esAdmin(session)) { response.sendRedirect("/"); return; }
 
         List<Pago> pagos = pagoRepository.findByMesAndAnio(mes, anio);
 
@@ -220,7 +215,6 @@ public class LoginWebController {
         PdfWriter.getInstance(doc, response.getOutputStream());
         doc.open();
 
-        // ---- Título ----
         Font tituloFont = new Font(Font.HELVETICA, 18, Font.BOLD, new Color(30, 41, 59));
         Paragraph titulo = new Paragraph(
             "Reporte de Pagos - " + MESES[mes] + " " + anio, tituloFont);
@@ -228,24 +222,20 @@ public class LoginWebController {
         titulo.setSpacingAfter(8);
         doc.add(titulo);
 
-        // ---- Subtítulo con resumen ----
         long pagados    = pagos.stream()
             .filter(p -> "pagado".equalsIgnoreCase(p.getEstado())).count();
         long pendientes = pagos.size() - pagados;
-
         Double totalRecaudado = pagoRepository.totalRecaudado(mes, anio);
         if (totalRecaudado == null) totalRecaudado = 0.0;
 
         Font subFont = new Font(Font.HELVETICA, 11, Font.NORMAL, new Color(100, 116, 139));
         Paragraph sub = new Paragraph(
             "Pagados: " + pagados + "   |   Pendientes: " + pendientes
-            + "   |   Recaudado: $" + String.format("%.2f", totalRecaudado),
-            subFont);
+            + "   |   Recaudado: $" + String.format("%.2f", totalRecaudado), subFont);
         sub.setAlignment(Element.ALIGN_CENTER);
         sub.setSpacingAfter(20);
         doc.add(sub);
 
-        // ---- Tabla ----
         PdfPTable tabla = new PdfPTable(5);
         tabla.setWidthPercentage(100);
         tabla.setWidths(new float[]{2f, 4f, 2.5f, 2f, 2.5f});
@@ -271,18 +261,15 @@ public class LoginWebController {
             String monto  = p.getMonto() != null
                             ? "$" + String.format("%.2f", p.getMonto()) : "$0.00";
             String estado = p.getEstado() != null ? p.getEstado() : "-";
-            String fecha  = p.getFechaPago() != null
-                            ? p.getFechaPago().toString() : "-";
+            String fecha  = p.getFechaPago() != null ? p.getFechaPago().toString() : "-";
 
             tabla.addCell(new Paragraph(nie, bodyFont));
             tabla.addCell(new Paragraph(nombre, bodyFont));
             tabla.addCell(new Paragraph(monto, bodyFont));
-
             Font estadoFont = "pagado".equalsIgnoreCase(estado)
                 ? new Font(Font.HELVETICA, 10, Font.BOLD, verdeTexto)
                 : new Font(Font.HELVETICA, 10, Font.BOLD, rojoTexto);
             tabla.addCell(new Paragraph(estado, estadoFont));
-
             tabla.addCell(new Paragraph(fecha, bodyFont));
         }
 
@@ -304,16 +291,12 @@ public class LoginWebController {
     public void pdfMatriculas(HttpServletResponse response,
                               HttpSession session) throws IOException {
 
-        if (!esAdmin(session)) {
-            response.sendRedirect("/");
-            return;
-        }
+        if (!esAdmin(session)) { response.sendRedirect("/"); return; }
 
         List<Estudiante> estudiantes = estudianteRepository.findAll();
 
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition",
-            "attachment; filename=matriculas.pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=matriculas.pdf");
 
         Document doc = new Document(PageSize.A4.rotate());
         PdfWriter.getInstance(doc, response.getOutputStream());
@@ -353,6 +336,51 @@ public class LoginWebController {
 
         doc.add(tabla);
         doc.close();
+    }
+
+    // =========================
+    // PREVIEW DATOS — AJAX
+    // =========================
+    @GetMapping("/reportes/preview/pagos")
+    @ResponseBody
+    public ResponseEntity<?> previewPagos(@RequestParam int mes,
+                                           @RequestParam int anio,
+                                           HttpSession session) {
+        if (!esAdmin(session))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        List<Pago> pagos = pagoRepository.findByMesAndAnio(mes, anio);
+        List<Map<String, String>> data = new ArrayList<>();
+        for (Pago p : pagos) {
+            Map<String, String> row = new HashMap<>();
+            row.put("nie",    p.getEstudiante() != null ? p.getEstudiante().getNie() : "-");
+            row.put("nombre", p.getEstudiante() != null ? p.getEstudiante().getNombreCompleto() : "-");
+            row.put("monto",  p.getMonto() != null ? "$" + String.format("%.2f", p.getMonto()) : "$0.00");
+            row.put("estado", p.getEstado() != null ? p.getEstado() : "-");
+            row.put("fecha",  p.getFechaPago() != null ? p.getFechaPago().toString() : "-");
+            data.add(row);
+        }
+        return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/reportes/preview/matriculas")
+    @ResponseBody
+    public ResponseEntity<?> previewMatriculas(HttpSession session) {
+        if (!esAdmin(session))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        List<Estudiante> estudiantes = estudianteRepository.findAll();
+        List<Map<String, String>> data = new ArrayList<>();
+        for (Estudiante e : estudiantes) {
+            Map<String, String> row = new HashMap<>();
+            row.put("nie",          e.getNie() != null ? e.getNie() : "-");
+            row.put("nombre",       e.getNombreCompleto() != null ? e.getNombreCompleto() : "-");
+            row.put("bachillerato", e.getBachillerato() != null ? e.getBachillerato().getNombre() : "Sin asignar");
+            row.put("grado",        e.getGrado() != null ? e.getGrado().getNombre() : "Sin asignar");
+            row.put("seccion",      e.getSeccion() != null ? e.getSeccion().getNombre() : "Sin asignar");
+            data.add(row);
+        }
+        return ResponseEntity.ok(data);
     }
 
     // =========================
@@ -442,7 +470,7 @@ public class LoginWebController {
     }
 
     // =========================
-    // REGISTRAR ESTUDIANTE — protegido
+    // REGISTRAR ESTUDIANTE
     // =========================
     @GetMapping("/registrar-estudiante")
     public String mostrarRegistroEstudiante(Model model, HttpSession session,
@@ -513,7 +541,7 @@ public class LoginWebController {
     }
 
     // =========================
-    // GESTIÓN MATRÍCULA — protegido
+    // GESTIÓN MATRÍCULA
     // =========================
     @GetMapping("/gestion-matricula")
     public String mostrarGestionMatricula(Model model, HttpSession session,
@@ -525,7 +553,7 @@ public class LoginWebController {
     }
 
     // =========================
-    // LOGOUT — cierre total
+    // LOGOUT
     // =========================
     @GetMapping("/logout")
     public String logout(HttpSession session, HttpServletResponse response) {
@@ -533,28 +561,22 @@ public class LoginWebController {
         if (usuario != null)
             registrarBitacora(usuario, usuario.getIdUsuario(), "LOGOUT", "Cerró sesión");
 
-        // 1. Borrar atributos explícitamente
         session.removeAttribute("usuarioLogueado");
         session.removeAttribute("rolUsuario");
         session.removeAttribute("adminVerificado");
-
-        // 2. Invalidar sesión completa
         session.invalidate();
 
-        // 3. Borrar cookie JSESSIONID del navegador
         Cookie cookie = new Cookie("JSESSIONID", "");
         cookie.setMaxAge(0);
         cookie.setPath("/");
         response.addCookie(cookie);
 
-        // 4. Cabeceras anti-caché
         noCache(response);
-
         return "redirect:/";
     }
 
     // =========================
-    // CREAR USUARIO DESDE LOGIN (verificado por admin)
+    // CREAR USUARIO DESDE LOGIN
     // =========================
     @PostMapping("/api/crear-usuario")
     @ResponseBody
@@ -562,9 +584,8 @@ public class LoginWebController {
                                                      HttpSession session) {
 
         Boolean adminVerificado = (Boolean) session.getAttribute("adminVerificado");
-        if (adminVerificado == null || !adminVerificado) {
+        if (adminVerificado == null || !adminVerificado)
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No autorizado");
-        }
 
         String username = body.get("username");
         String password = body.get("password");
@@ -585,7 +606,6 @@ public class LoginWebController {
         userRepository.save(u);
 
         session.removeAttribute("adminVerificado");
-
         return ResponseEntity.ok().build();
     }
 }
